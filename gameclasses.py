@@ -15,6 +15,7 @@ import time
 
 
 
+
 def begingame():
 	def start():
 		#pygame.mixer.init()
@@ -22,6 +23,8 @@ def begingame():
 		#pygame.mixer.music.play()
 
 		print("Please hold--we're shuffling all your organisms into the game!\n")
+		
+		### USE DEBUGPOP FOR BUILDING; USE POPMAIN FOR NORMAL GAMES ###
 		popmain.shufflebegin()
 		newplayer = Player()
 		print("Hey--what's your name?")
@@ -29,6 +32,8 @@ def begingame():
 		newplayer.name = userinput
 		print("######################################################################")
 		print("Hi {0}!".format(newplayer.name))
+		
+		### USE POPMAIN FOR NORMAL GAMES AND DEBUGPOP FOR BUILDING ###
 		newplayer.popmaster = popmain.popmaster
 		print("Oh--before we get started, we should pick a game mode!")
 		print("(Press any key to continue)")
@@ -123,7 +128,7 @@ def choosenext(self):
 		if 'quit' in usrinput:
 			self.quitsave()
 		for option in self.optionlist.keys():
-			if (usrinput) and (usrinput.lower() in option) or (usrinput == option):
+			if ((usrinput) and (usrinput.lower() in option) or (usrinput == option)) and usrinput != "":
 				print("######################################################################")
 				print(option.title())
 				print("######################################################################")
@@ -135,13 +140,15 @@ def choosenext(self):
 					usrinput2 = input("")
 					print("######################################################################")
 					for key in self.optionlist[option].keys():
-						if (usrinput2.lower() in key) or (usrinput2.lower() == key.lower()):
-							if usrinput2 and ((usrinput2.lower() == "go back") or ("go back" in usrinput2)):
+						if ((usrinput2.lower() in key) or (usrinput2.lower() == key.lower())) and usrinput2 != "":
+							if usrinput2 and ((usrinput2.lower() == "go back") or ("go back" in usrinput2) or ("0" in usrinput2)):
 								ready = True
 								break
-							else:
+							elif usrinput2 != "":
 								self.optionlist[option][key]()
 								break
+					else:
+						print("I didn't get that--try again!")
 					
 					
 		if ready == False:
@@ -239,49 +246,56 @@ class Player(Actor):
 
 
 		self.orgsdict = {
-		"set companion" : self.setcompanion,
-		"inspect companion" : self.examinecompanion,
-		"feed companion" : self.feedcompanion,
-		"rest companion" : self.restcompanion,
-		"check resting organisms" : self.checkresting,
-		"breed organisms" : self.breed,
-		"view nursery" : self.checknursery,
-		"bestiary" : self.examinebestiary,
-		"go back" : self.goback
+		"set companion [1]" : self.setcompanion,
+		"inspect companion [2]" : self.examinecompanion,
+		"feed companion [3]" : self.feedcompanion,
+		"rest companion [4]" : self.restcompanion,
+		"check resting organisms [5]" : self.checkresting,
+		"breed organisms [6]" : self.breed,
+		"view nursery [7]" : self.checknursery,
+		"view bestiary [8]" : self.examinebestiary,
+		"go back [0]" : self.goback
 
 		}
 
 		self.playerdict = {
-		"add new activities" : self.getactivities,
-		"check stats" : self.checkstats,
-		"check inventory" : self.checkinventory,
-		"check my exp" : self.checkexp,
-		"check nature log" : self.checklog,
-		"go back" : self.goback
+		"add new activities [1]" : self.getactivities,
+		"check stats [2]" : self.checkstats,
+		"check inventory [3]" : self.checkinventory,
+		"check my exp [4]" : self.checkexp,
+		"check nature log [5]" : self.checklog,
+		"go back [0]" : self.goback
 		}
 
 		self.exploredict = {
-		"explore a new environment" : self.explorenew,
-		"explore my current environment" : self.explorecurrent,
-		"go back" : self.goback
+		"explore a new environment [1]" : self.explorenew,
+		"explore my current environment [2]" : self.explorecurrent,
+		"go back [0]" : self.goback
 
 		}
 
+		self.civdict = {
+		"found a settlement [1]" : self.foundnew,
+		"visit a settlement [2]" : self.visitsettlement,
+		"go back [0]" : self.goback
+		}
+
 		self.settingsmenu = {
-		"toggle flex" : self.toggleflex,
-		"toggle sound" : self.togglesound,
-		"save game" : self.save,
-		"go back" : self.goback
+		"toggle flex [1]" : self.toggleflex,
+		"toggle sound [2]" : self.togglesound,
+		"save game [3]" : self.save,
+		"go back [0]" : self.goback
 		}
 
 		# Creates list of all options for a player to choose
 		self.optionlist = {
 			#"add new activities" : self.getactivities,
-			"explore the world" : self.exploredict,
-			"player options" : self.playerdict,
-			"care for your organisms" : self.orgsdict,
+			"explore the natural world [1]" : self.exploredict,
+			"player options [2]" : self.playerdict,
+			"care for your organisms [3]" : self.orgsdict,
+			"explore civilization [4]" : self.civdict,
 			
-			"settings" : self.settingsmenu
+			"settings [5]" : self.settingsmenu
 			#"[demo] print all animals" : self.printanimals,
 			#"set companion" : self.setcompanion,
 			#"examine companion" : self.examinecompanion,
@@ -316,15 +330,15 @@ class Player(Actor):
 
 	# Lists the options available to a player within a given environment
 		self.envoptions = {
-			"sit patiently and wait to be approached" : self.sit,
-			"go out and carefully look for organisms" : self.look,
-			"go bounding through the environment" : self.bound,
-			"go back" : self.goback
+			"sit patiently and wait to be approached [1]" : self.sit,
+			"go out and carefully look for organisms [2]" : self.look,
+			"go bounding through the environment [3]" : self.bound,
+			"go back [0]" : self.goback
 		}
 
 	# Stuff the player has
 		self.inventory = []
-		self.gold = 0
+		self.gold = 1000
 		self.equipment = []
 		self.bestiary = []
 		self.naturelog = []
@@ -350,6 +364,11 @@ class Player(Actor):
 		self.tempenemy = self
 		self.excludestats = ["Max HP", "Gold", "Exp"]
 		self.hotel = []
+		self.settlements = []
+		self.scavenged = False
+		self.correctstr = False
+		self.businesses = []
+		self.visiting = ""
 
 	# For breeding organisms
 		self.dam = ""
@@ -801,6 +820,182 @@ class Player(Actor):
 						self.expdict[exptype] -= 100
 				
 
+
+
+	# Allows for the founding of a new settlement
+	def foundnew(self):
+		def found(self):
+			place = Village()
+			self.settlements.append(place)
+			location = self.settlements.index(place)
+			print("You've just founded a new village!")
+			print("What would you like to name it? (Note:  It's going to get a 'ville' at the end of it!)")
+			usrinput2 = input("")
+			if usrinput2:
+				self.settlements[location].name = (usrinput2+"ville").title()
+			print("Ok--you've founded {0}!".format(self.settlements[location].name))
+			print("######################################################################")
+		print("Would you like to found a new village?  It'll cost {0} gold!".format(Village.cost))
+		usrinput = input("")
+		if usrinput:
+			if "y" in usrinput and self.gold >= Village.cost:
+				found(self)
+				self.gold -= Village.cost
+			elif "y" in usrinput and self.gold < Village.cost:
+				print("You don't have enough gold for that, yet!")
+				print("######################################################################")
+			else:
+				print("No problem.  We can work on this another time.")
+				print("######################################################################")
+		else:
+			print("Whoops--did you want to found a new village?  Type 'yes' or 'no'!")
+
+
+	def openshop(self):
+		if self.gold >= basicShop.cost:
+			print("Are you sure you want to open a shop?  It'll cost you {0} gold!".format(basicShop.cost))
+			usrinput = input("")
+			if usrinput:
+				if "y" in usrinput:
+					newshop = basicShop()
+					if not self.businesses:
+						self.businesses.append(newshop)
+						location = self.businesses.index(newshop)
+						print("Congratulations--you've just opened your very first shop!")
+						print("What would you like to call it?!")
+						usrinput = input("")
+						self.businesses[location].name = usrinput.title()
+						print("All right--{0} will be open for business...starting tomorrow!".format(newshop.name))
+						self.businesses[location].firstone = True
+						print("######################################################################")
+
+					elif self.businesses:
+						self.businesses.append(newshop)
+						location = self.businesses.index(newshop)
+						print("Congratulations--you've opened a new shop!")
+						print("Let's name this one--go ahead:")
+						usrinput = input("")
+						self.businesses[location].name = usrinput.title()
+						print("All right--{0} will be open for business...starting tomorrow!".format(newshop.name))
+						print("######################################################################")
+				else:
+					print("Ooops--try again!")
+
+
+	def genmenagerie(self):
+		if self.visiting and self.visiting.menagerieopen == False and self.gold >= self.visiting.menageriecost:
+			print("Would you like to found a menagerie?  This will help you attract visitors who may become residents in your settlement!")
+			usrinput = input("")
+			if "y" in usrinput:
+				print("Ok--you've opened your menagerie for business!")
+				print("######################################################################")
+				self.visiting.menagerieopen = True
+			else:
+				print("No problem--we'll do it another time.")
+				print("######################################################################")
+		elif self.visiting.menagerie == True:
+			print("You already have a menagerie here, and you can only have one per settlement!")
+			print("If you want to expand your menagerie, upgrade your settlement from a {0} to a {1}!".format(self.visiting.type, self.visiting.upgrade))
+			print("######################################################################")
+
+		elif not self.visiting:
+			print("You haven't founded a settlement, yet!")
+			print("######################################################################")
+		elif self.gold < self.visiting.menageriecost:
+			print("You can't afford to open a menagerie, yet...")
+			print("######################################################################")
+
+	def genvisitors(self):
+		self.visiting.visitors = []
+		for i in range(self.visiting.viscapacity):
+			newguy = organisms.NPC()
+			randpick = random.randint(0,len(newguy.namedict.keys())-1)
+			newguy.name = list(newguy.namedict.keys())[randpick]
+			self.visiting.visitors.append(newguy)
+
+
+	def attractresidents(self):
+		pass
+
+	def approachstrangers(self):
+		pass
+
+	def scavenge(self):
+		scavroll = random.randint(0,len(organisms.masteritems) - 1) 
+		youfound = organisms.masteritems[scavroll]()
+
+		if self.visiting and self.scavenged == False:
+			if youfound.rarity <= self.luck:
+				print("You go looking around {0} and find {1}!".format(self.visiting.name, youfound.name))
+				self.inventory.append(youfound)
+				self.scavenged = True
+				print("######################################################################")
+			else:
+				print("You didn't find anything...")
+				self.scavenged = True
+				print("######################################################################")
+		else:
+			print("You've already scavenged on this visit and didn't find anything.")
+			print("######################################################################")
+
+	def visitsettlement(self):
+		self.brokenloop = False
+		choices = {
+		"scavenge [1]" : self.scavenge,
+		"open a shop [2]" : self.openshop,
+		"open a menagerie [3]" : self.genmenagerie,
+		"go back (leave settlement) [0]" : self.goback
+		}
+
+		if self.settlements:
+			self.correctstr = False
+			for settlement in self.settlements:
+				print(settlement.name.title())
+			print("Which settlement would you like to visit?")
+			usrinput = input("")
+			if usrinput != "":
+				for settlement in self.settlements:
+					if usrinput.lower() in settlement.name.lower():
+						settlement.visit(self)
+						self.genvisitors()
+						print("Current visitors:")
+						for visitor in self.visiting.visitors:
+							print(visitor.name)
+				while self.brokenloop == False:
+					for choice in choices.keys():
+						print(choice.title())
+					print("What would you like to do while in {0}?".format(self.visiting.name))
+					newinput = input("")
+					if newinput:
+						for choice in choices:
+							if newinput.lower() in choice.lower():
+								if "go back" in choice:
+									print("######################################################################")
+									print("Are you sure you want to leave {0}?".format(self.visiting.name))
+									lastcall = input("")
+									if "y" in lastcall:
+										choices[choice]()
+										self.correctstr = True
+									else:
+										print("Ok--sticking around a little longer.")
+										print("######################################################################")
+										self.correctstr = True
+								else:
+									choices[choice]()
+									self.correctstr = True
+									break
+						if self.correctstr == False:
+							print("I didn't get that--try again!")
+					else:
+						print("Whoops--enter an option!")
+				else:
+					print("Enter a choice and we'll head that way!")
+
+		else:
+			print("You haven't founded any settlements, yet!")
+
+
+
 	def gameexpdump(self):
 		# Checks to see whether or not you've earned more than ten exp points in game, and if you have, distributes them across types of exp
 		if self.expdict["game"] >= 10:
@@ -995,7 +1190,7 @@ class Player(Actor):
 			userinput = input("")
 			if userinput.lower() in self.envlist.keys():
 				for env in self.envlist.keys():
-					if (userinput.lower() in env.lower()) and userinput != "":
+					if userinput.lower() in env.lower() and userinput != "":
 						self.currentenv = self.envlist[env]()
 				break
 			else:
@@ -1222,6 +1417,7 @@ class Player(Actor):
 
 	def goback(self):
 		self.brokenloop = True
+		self.scavenged = False
 
 	def look(self):
 		print("\n ### GO LOOKING FOR THINGS (REASONABLE) ### ")
@@ -1554,6 +1750,8 @@ class Player(Actor):
 		if self.companion:
 			self.companion.stats["HP"] = self.companion.stats["Max HP"]
 
+
+
 # Verifies that the user wants to quit and offers to save the game
 	def quitsave(self, namedfile="newgame1"):
 			print("\n ### QUIT GAME ### ")
@@ -1568,10 +1766,12 @@ class Player(Actor):
 
 
 	
-
+### TO BE USED IN GAMEPLAY ###
 popmain = Population()
 
-
+### TO BE USED IN DEVELOPMENT ###
+#debugpop = Population()
+#debugpop.popmaster = organisms.dummypop
 
 
 

@@ -15,6 +15,7 @@ import random
 
 
 
+
 class basicEnv(object):
 	def __init__(self):
 		self.name = "A basic environment"
@@ -101,6 +102,62 @@ class darkForest(basicEnv):
 		self.name = "a dark and ominous forest"
 		self.difficulty = 20
 		self.animalnum = 40
+
+
+### TYPES OF SHOPS ###
+class basicShop(basicEnv):
+	cost = 50
+	def __init__(self):
+		super().__init__()
+		self.element = ""
+		self.shoppers = []
+		self.name = ""
+		self.cost = 50
+		self.firstone = False
+
+
+### VILLAGES, TOWNS, AND CITIES ###
+
+class Village(basicEnv):
+	cost = 100
+	def __init__(self):
+		super().__init__()
+		self.weather = ""
+		self.rescapacity = 10
+		self.viscapacity = 20
+		self.shopcost = 1000
+		self.name = "A small village"
+		self.cost = 100
+		self.type = "village"
+		self.upgrade = "town"
+		self.upgrade2 = "city"
+		self.visitors = []
+
+		self.menageriecost = 100
+		self.menagerie = []
+		self.menageriesize = 3
+		self.menagerieopen = False
+
+	def setweather(self):
+		weatherlist = [
+		"sunny",
+		"cloudy",
+		"rainy",
+		"stormy",
+		"overcast"
+		]
+
+		weatherroll = random.randint(0,len(weatherlist)-1)
+		self.weather = weatherlist[weatherroll]
+
+
+
+	def visit(self, player):
+		self.setweather()
+		print("You've arrived in {0} {1}!".format(self.weather, self.name))
+		print("(Press Enter to Continue)")
+		input("")
+		player.visiting = self
 
 
 

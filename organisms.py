@@ -67,6 +67,7 @@ class gameObject(object):
 class Food(gameObject):
 	def __init__(self):
 		self.quality = 1
+		self.rarity = 1
 
 class hpFood(Food):
 	def __init__(self):
@@ -92,7 +93,13 @@ class luckFood(Food):
 		self.affects = "Luck"
 		self.name = "some eggs"
 
-
+### TO BE USED IN SCAVENGING AND QUESTS--ADD TO THIS AS NEW ITEMS ARE ADDED ###
+masteritems = [
+hpFood,
+speedFood,
+strengthFood,
+luckFood
+]
 
 
 
@@ -106,8 +113,8 @@ class livingThing(gameObject):
 		self.listready = False
 		self.truename = ""
 
-# After livingThing, classes narrow into more specific groups that have unique traits, abilities, and roles in the game
 
+# After livingThing, classes narrow into more specific groups that have unique traits, abilities, and roles in the game
 class Organism(livingThing):
 	def __init__(self):
 		super().__init__()
@@ -166,6 +173,7 @@ class Organism(livingThing):
 		"Gold" : self.gold,
 		"Exp" : self.expgiven
 		}
+
 	def orgattack(self, opponent):
 		def setdamage(self):
 			self.damage = random.randint(self.stats["Strength"], self.stats["Strength"] + self.stats["Luck"])
@@ -249,6 +257,28 @@ class Organism(livingThing):
 
 
 
+### TO BE USED IN PRODUCING ALL NON-PLAYER, HUMAN/HUMANOID CHARACTERS WHO CAN SPEAK TO/INTERACT WITH THE PLAYER ###
+class NPC(Organism):
+	def __init__(self):
+		super().__init__()
+		self.namedict = {
+		"jim" : "m",
+		"jenny" : "f",
+		"jamal" : "m",
+		"jess" : "f"
+		}
+		
+		self.sex = ""
+		self.trust = 0
+		self.gold = 0
+		self.name = "Stranger"
+		self.merchant = 0
+		self.buyinterest = 0
+		self.likes = ""
+		self.items = []
+		self.hired = ""
+		self.resident = ""
+		self.visitor = ""
 
 
 class Reptile(Organism):
