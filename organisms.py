@@ -63,6 +63,7 @@ def openitup():
 class gameObject(object):
 	def __init__(self):
 		self.name = name
+		self.price = 1
 
 class Food(gameObject):
 	def __init__(self):

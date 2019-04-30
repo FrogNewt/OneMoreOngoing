@@ -114,6 +114,11 @@ class basicShop(basicEnv):
 		self.name = ""
 		self.cost = 50
 		self.firstone = False
+		self.mascot = ""
+		self.forsale = []
+		self.space = 3
+		self.earnings = 0
+		self.sold = []
 
 
 ### VILLAGES, TOWNS, AND CITIES ###
@@ -134,6 +139,7 @@ class Village(basicEnv):
 		self.visitors = []
 		self.residents = []
 		self.popularity = 1
+		self.businesses = []
 
 		self.menageriecost = 100
 		self.menagerie = []

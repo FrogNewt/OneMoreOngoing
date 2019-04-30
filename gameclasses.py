@@ -24,8 +24,9 @@ def begingame():
 
 		print("Please hold--we're shuffling all your organisms into the game!\n")
 		
+		
 		### USE DEBUGPOP FOR BUILDING; USE POPMAIN FOR NORMAL GAMES ###
-		#popmain.shufflebegin()
+		popmain.shufflebegin()
 		newplayer = Player()
 		print("Hey--what's your name?")
 		userinput = input("")
@@ -35,7 +36,7 @@ def begingame():
 		
 		### USE POPMAIN FOR NORMAL GAMES AND DEBUGPOP FOR BUILDING ###
 		#newplayer.popmaster = popmain.popmaster
-		newplayer.popmaster = debugpop.popmaster
+		newplayer.popmaster = popmain.popmaster
 
 		print("Oh--before we get started, we should pick a game mode!")
 		print("(Press any key to continue)")
@@ -373,14 +374,39 @@ class Player(Actor):
 		self.settlements = []
 		self.scavenged = False
 		self.correctstr = False
-		self.businesses = []
+		#self.businesses = []
 		self.visiting = ""
 		self.switch = False
+		self.patron = ""
 
 	# For breeding organisms
 		self.dam = ""
 		self.sire = ""
 	
+	# Returns a list containing the current day
+	def currentday(self):
+		date = time.ctime().split(":")[0].split()[0:3]
+		year = time.ctime().split(":")[2].split()[1]
+		date.append(year)
+		return date
+
+	# Returns a list containing the current (exact, including date) hour
+	def currenthour(self):
+		date = time.ctime().split()[:3]
+		hour = time.ctime().split()[3].split(":")[0]
+		date.append(hour)
+		return date
+
+	# Returns a list containing the current (exact) minute
+	def currentmin(self):
+		minute = time.ctime().split()[3].split(":")[:2]
+		return minute
+
+	# Returns a list containing the current (exact) second
+	def currentsec(self):
+		second = time.ctime().split()[3].split(":")[:3]
+		return second
+
 	def addtolog(self):
 		if self.target not in self.naturelog:
 			print("######################################################################")
@@ -660,9 +686,7 @@ class Player(Actor):
 					userwait = input("")
 					if "y" in userwait:
 						print("Ok--check back tomorrow!")
-						self.dam.matedtime = str(time.ctime())
-						self.dam.matedtime = self.dam.matedtime.split()[3]
-						self.dam.matedtime = self.dam.matedtime.split(":")[1]
+						self.dam.matedtime = self.currentmin()
 						self.bestiary.pop(self.bestiary.index(self.dam))
 						self.bestiary.pop(self.bestiary.index(self.sire))
 						self.nursery.append(self.dam)
@@ -721,9 +745,7 @@ class Player(Actor):
 		print("######################################################################")
 		
 	# Splits ctime output to produce an element of the current time (e.g. day, month, hour, etc)
-		checktime = str(time.ctime())
-		checktime = checktime.split()[3]
-		checktime = checktime.split(":")[1]
+		checktime = self.currentmin()
 		
 	# Checks to see if the baby is ready, yet
 		if self.dam.matedtime != checktime:
@@ -872,34 +894,153 @@ class Player(Actor):
 			if usrinput:
 				if "y" in usrinput:
 					newshop = basicShop()
-					if not self.businesses:
-						self.businesses.append(newshop)
-						location = self.businesses.index(newshop)
+					if not self.visiting.businesses:
+						self.visiting.businesses.append(newshop)
+						location = self.visiting.businesses.index(newshop)
 						print("######################################################################")
 						print("Congratulations--you've just opened your very first shop!")
 						print("######################################################################")
 						print("What would you like to call it?!")
 						print("######################################################################")
 						usrinput = input("")
-						self.businesses[location].name = usrinput.title()
+						self.visiting.businesses[location].name = usrinput.title()
 						print("All right--{0} will be open for business...starting tomorrow!".format(newshop.name))
-						self.businesses[location].firstone = True
+						self.visiting.businesses[location].firstone = True
 						print("######################################################################")
 
-					elif self.businesses:
-						self.businesses.append(newshop)
-						location = self.businesses.index(newshop)
+					elif self.visiting.businesses:
+						self.visiting.businesses.append(newshop)
+						location = self.visiting.businesses.index(newshop)
 						print("Congratulations--you've opened a new shop!")
 						print("Let's name this one--go ahead:")
 						usrinput = input("")
-						self.businesses[location].name = usrinput.title()
+						self.visiting.businesses[location].name = usrinput.title()
 						print("All right--{0} will be open for business...starting tomorrow!".format(newshop.name))
 						print("######################################################################")
 				else:
 					print("Ooops--try again!")
 
+	def pickshop(self):
+		if self.visiting.businesses:
+			while not self.patron:
+				print("Which shop do you want to visit?")
+				for business in self.visiting.businesses:
+					print(business.name.title())
+				print("\n")
+				usrinput = input("")
+				for shop in self.visiting.businesses:
+					if usrinput.lower() in shop.name.lower():
+						self.patron = shop
+						break
+				else:
+					print("Which shop, again?")
+			print("You're visiting {0}!".format(self.patron.name))
+			print("######################################################################")
+			self.checkshop()
+			self.patron = ""
+		else:
+			print("{0} doesn't have any shops, yet!".format(self.visiting.name))
+
+
+	def checkearnings(self):
+		if self.patron.earnings:
+			print("It looks like you've sold:")
+			for solditem in self.patron.sold:
+				print(solditem.name + "for " + solditem.price)
+				input("")
+			self.gold += self.patron.earnings
+			print("######################################################################")
+			print("You've earned {0} gold!".format(self.patron.earnings))
+			print("######################################################################")
+			self.patron.earnings = 0
+		else:
+			print("######################################################################")
+			print("You haven't sold anything, yet!")
+			print("######################################################################")
+
 	def checkshop(self):
-		pass
+		shopmenu = {
+		"put something up for sale [1]" : self.sellatshop,
+		"check earnings [2]" : self.checkearnings,
+		"set the shop mascot [3]" : self.setmascot,
+		"go back [0]" : self.goback
+
+		}
+		if self.patron:
+			self.brokenloop = False
+			while self.brokenloop == False:
+				print("### MANAGE SHOP ({0}) ### \n".format(self.patron.name.upper()))
+				if self.patron.mascot:
+					print("Current shop mascot:")
+					print(self.patron.mascot.name + "({0})".format(self.patron.mascot.type))
+					print("")
+				for menuitem in shopmenu.keys():
+					print(menuitem.title())
+				print("\nWhat do you want to do at {0}?".format(self.patron.name))
+				usrinput = input("")
+				for menuitem in shopmenu.keys():
+					if usrinput.lower() in menuitem.lower():
+						shopmenu[menuitem]()
+
+
+
+
+	def sellatshop(self):
+		if self.inventory:
+			for item in self.inventory:
+				print(item.name)
+			print("What would you like to sell?")
+		else:
+			print("You don't have anything to sell, yet.")
+
+	def setmascot(self):
+		if self.bestiary:
+			if not self.patron.mascot:
+				print("Prospective mascots:\n")
+				i = 0
+				for beast in self.bestiary:
+					beast.index = i
+					print("\t" + beast.name)
+					print("\t" + "Type: " + beast.type)
+					print("\tIndex: " + str(beast.index))
+					print("\n")
+					i += 1
+				print("Who would you like to set as the shop's mascot? (Type the organism's index!)")
+				print("######################################################################")
+				usrinput = input("")
+				for beast in self.bestiary:
+					if usrinput == str(beast.index):
+						self.patron.mascot = beast
+						break
+				print("You've set {0} as the {1} mascot!".format(self.patron.mascot.name, self.patron.name))
+				input("")
+				print("######################################################################")
+			elif self.mascot:
+				print("{0}'s current mascot is {1}--do you want to replace it?".format(self.patron.name, self.patron.mascot.name))
+				usrinput = input("")
+				if "y" in usrinput:
+					print("Prospective mascots:\n")
+					i = 0
+					for beast in self.bestiary:
+						beast.index = i
+						print("\t" + beast.name)
+						print("\t" + "Type: " + beast.type)
+						print("\tIndex: " + str(beast.index))
+						print("\n")
+						i += 1
+					print("Who would you like to set as the shop's mascot? (Type the organism's index!)")
+					print("######################################################################")
+					usrinput = input("")
+					for beast in self.bestiary:
+						if usrinput == str(beast.index):
+							self.patron.mascot = beast
+							break
+				else:
+					print("Ok--we'll leave {0} as the mascot for now!".format(self.patron.mascot.name))
+		else:
+			print("######################################################################")
+			print("You don't have anyone in your bestiary to set as a mascot right now!")
+			print("######################################################################")
 
 
 	def genmenagerie(self):
@@ -934,7 +1075,8 @@ class Player(Actor):
 		self.switch = False
 		if self.visiting.menagerieopen == True:
 			menu = {
-			"add to menagerie [1]" : self.addtomenagerie,
+			"add someone to the menagerie [1]" : self.addtomenagerie,
+			"remove someone from the menagerie [2]" : self.delfrommenagerie,
 			"go back [0]" : self.goback
 			}
 
@@ -968,8 +1110,48 @@ class Player(Actor):
 					print("######################################################################")
 		elif not self.visiting.menagerie:
 			print("######################################################################")
-			print("You don't have a menagerie yet--you'll have to go buy one, first!")
+			print("{0} doesn't have a menagerie yet--you'll have to go buy one, first!".format(self.visiting.name))
 			print("######################################################################")
+
+
+	def delfrommenagerie(self):
+		while True:
+			if self.visiting.menagerie:
+				i = 0
+				for org in self.visiting.menagerie:
+					org.index = i
+					print(org.name)
+					print("Type: " + org.type)
+					print("Index: " + str(org.index))
+					i += 1
+					print("\n")
+
+
+				print("Who do you want to remove from the menagerie? (Type the organism's index)")
+				usrinput = input("")
+
+				for org in self.visiting.menagerie:
+					if usrinput == str(org.index):
+						popspot = self.visiting.menagerie.index(org)
+						self.bestiary.append(org)
+						self.visiting.menagerie.pop(popspot)
+						print("{0} has been removed from the menagerie and returned to the bestiary!".format(org.name))
+						break
+				input("(Press enter to continue)")
+				
+				print("Do you want to remove anyone else?")
+				usrinput2 = input("")
+				if "y" in usrinput2:
+					pass
+				else:
+					print("Ok--moving on!")
+					input("(Press enter to continue)")
+					break
+
+			elif not self.visiting.menagerie:
+				print("Your menagerie is empty!")
+				break
+
 
 
 
@@ -1061,8 +1243,9 @@ class Player(Actor):
 		choices = {
 		"scavenge [1]" : self.scavenge,
 		"open a shop [2]" : self.openshop,
-		"open a menagerie [3]" : self.genmenagerie,
-		"visit menagerie [4]" : self.visitmenagerie,
+		"check on shop [3]" : self.pickshop,
+		"open a menagerie [4]" : self.genmenagerie,
+		"visit menagerie [5]" : self.visitmenagerie,
 		"go back (leave settlement) [0]" : self.goback
 		}
 
@@ -1125,7 +1308,6 @@ class Player(Actor):
 						print("Whoops--enter an option!")
 				else:
 					self.brokenloop = False
-					print("Enter a choice and we'll head that way!")
 			else:
 				print("I didn't get that settlement name--try again!")
 		
@@ -1559,6 +1741,12 @@ class Player(Actor):
 			self.actexpdump()
 
 
+	def currentday(self):
+		date = time.ctime().split(":")[0].split()[0:3]
+		year = time.ctime().split(":")[2].split()[1]
+		date.append(year)
+		return date
+
 	def goback(self):
 		self.brokenloop = True
 		self.scavenged = False
@@ -1840,13 +2028,13 @@ class Player(Actor):
 
 	def checkresting(self):
 		print("\n ### CHECK RESTING ORGANISMS ### ")
-		timenow = str(time.ctime().split(" ")[3].split(":")[1])
+		timenow = self.currentmin()
 		if self.hotel:
 			print("These organisms are currently resting:")
-			for element in self.hotel:
-				print("\t" + element.name)
-				if element.beganrest != timenow:
-					element.resting = False
+			for org in self.hotel:
+				print("\t" + org.name)
+				if org.beganrest != timenow:
+					org.resting = False
 		someready = False
 		for org in self.hotel:
 			if org.resting == False:
@@ -1854,20 +2042,21 @@ class Player(Actor):
 		if someready == True:
 			i = 0
 			print("The following organisms are ready for action again (but you can leave them if you want them to keep resting!)")
-			for element in self.hotel:
-				element.index = i
-				if element.resting == False:
-					print(element.name)
-					print("Index: " + str(element.index))
+			for org in self.hotel:
+				org.index = i
+				if org.resting == False:
+					print(org.name)
+					print("Type: " + org.type)
+					print("Index: " + str(org.index))
 					print("Current stats: ")
-					if abs(int(timenow) - int(element.beganrest)):
-						potential = abs(int(timenow) - int(element.beganrest))
+					if abs(int(timenow) - int(org.beganrest)):
+						potential = abs(int(timenow) - int(org.beganrest))
 					else:
 						potential = "0"
-					for stat in element.stats.keys():
+					for stat in org.stats.keys():
 						if stat not in self.excludestats:
-							print("\t" + stat + " " + str(element.stats[stat]) + " (+ " + str(potential) + ")")
-					print("If you withdraw {0} now, all its stats will be increased by {1}!".format(element.name, str(potential)))
+							print("\t" + stat + " " + str(org.stats[stat]) + " (+ " + str(potential) + ")")
+					print("If you withdraw {0} now, all its stats will be increased by {1}!".format(org.name, str(potential)))
 					i += 1
 					print("######################################################################")
 			print("Who do you want to withdraw? (Type the organism's index or 'leave')")
@@ -1876,13 +2065,13 @@ class Player(Actor):
 				print("Ok--you can check back later!")
 				print("######################################################################")
 				return
-			for element in self.hotel:
-				if userinput3 == str(element.index):
-					print("You've withdrawn {0}!  It's back in the bestiary!".format(element.name))
-					for stat in element.stats.keys():
-						element.stats[stat] += abs(int(timenow) - int(element.beganrest))
-					self.bestiary.append(element)
-					self.hotel.pop(self.hotel.index(element))
+			for org in self.hotel:
+				if userinput3 == str(org.index):
+					print("You've withdrawn {0}!  It's back in the bestiary!".format(org.name))
+					for stat in org.stats.keys():
+						org.stats[stat] += abs(int(timenow) - int(org.beganrest))
+					self.bestiary.append(org)
+					self.hotel.pop(self.hotel.index(org))
 			print("######################################################################")
 
 		else:
@@ -1913,11 +2102,11 @@ class Player(Actor):
 
 	
 ### TO BE USED IN GAMEPLAY ###
-#popmain = Population()
+popmain = Population()
 
 ### TO BE USED IN DEVELOPMENT ###
-debugpop = Population()
-debugpop.popmaster = organisms.dummypop
+#debugpop = Population()
+#debugpop.popmaster = organisms.dummypop
 
 
 
