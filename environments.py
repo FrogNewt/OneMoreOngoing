@@ -132,6 +132,8 @@ class Village(basicEnv):
 		self.upgrade = "town"
 		self.upgrade2 = "city"
 		self.visitors = []
+		self.residents = []
+		self.popularity = 1
 
 		self.menageriecost = 100
 		self.menagerie = []
@@ -154,7 +156,9 @@ class Village(basicEnv):
 
 	def visit(self, player):
 		self.setweather()
+		print("######################################################################")
 		print("You've arrived in {0} {1}!".format(self.weather, self.name))
+		print("######################################################################")
 		print("(Press Enter to Continue)")
 		input("")
 		player.visiting = self

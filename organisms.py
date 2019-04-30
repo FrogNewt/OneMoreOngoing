@@ -261,15 +261,32 @@ class Organism(livingThing):
 class NPC(Organism):
 	def __init__(self):
 		super().__init__()
+		
+		self.elementslist = ["fire", "water", "earth", "air"]
+
 		self.namedict = {
 		"jim" : "m",
 		"jenny" : "f",
 		"jamal" : "m",
-		"jess" : "f"
+		"jess" : "f",
+		"echo" : "f",
+		"rick" : "m",
+		"mortimer" : "m",
+		"jerry" : "m",
+		"jocelyn" : "f",
+		"eric" : "m",
+		"horace" : "m",
+		"malik" : "m",
+		"leslie" : "f",
+		"farrah" : "f",
+		"sarah" : "f",
+		"amanda" : "f",
+		"courtney" : "f",
+		"barbara" : "f"
 		}
 		
 		self.sex = ""
-		self.trust = 0
+		self.comfort = 0
 		self.gold = 0
 		self.name = "Stranger"
 		self.merchant = 0
@@ -279,6 +296,7 @@ class NPC(Organism):
 		self.hired = ""
 		self.resident = ""
 		self.visitor = ""
+		self.element = ""
 
 
 class Reptile(Organism):

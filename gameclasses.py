@@ -25,7 +25,7 @@ def begingame():
 		print("Please hold--we're shuffling all your organisms into the game!\n")
 		
 		### USE DEBUGPOP FOR BUILDING; USE POPMAIN FOR NORMAL GAMES ###
-		popmain.shufflebegin()
+		#popmain.shufflebegin()
 		newplayer = Player()
 		print("Hey--what's your name?")
 		userinput = input("")
@@ -34,7 +34,9 @@ def begingame():
 		print("Hi {0}!".format(newplayer.name))
 		
 		### USE POPMAIN FOR NORMAL GAMES AND DEBUGPOP FOR BUILDING ###
-		newplayer.popmaster = popmain.popmaster
+		#newplayer.popmaster = popmain.popmaster
+		newplayer.popmaster = debugpop.popmaster
+
 		print("Oh--before we get started, we should pick a game mode!")
 		print("(Press any key to continue)")
 		input("")
@@ -122,6 +124,7 @@ def choosenext(self):
 		print("So, {0}, what would you like to do next?  You can choose from any of these (or 'quit'):\n".format(self.name))
 		for key in self.optionlist.keys():
 			print(key.title())
+		print("######################################################################")
 		print("")
 		ready = False
 		usrinput = input("")
@@ -133,12 +136,13 @@ def choosenext(self):
 				print(option.title())
 				print("######################################################################")
 				while ready == False:
+					print("######################################################################")
 					for key in self.optionlist[option].keys():
 						print(key.title())
 					print("######################################################################")
 					print("What would you like to do?")
-					usrinput2 = input("")
 					print("######################################################################")
+					usrinput2 = input("")
 					for key in self.optionlist[option].keys():
 						if ((usrinput2.lower() in key) or (usrinput2.lower() == key.lower())) and usrinput2 != "":
 							if usrinput2 and ((usrinput2.lower() == "go back") or ("go back" in usrinput2) or ("0" in usrinput2)):
@@ -148,7 +152,9 @@ def choosenext(self):
 								self.optionlist[option][key]()
 								break
 					else:
+						print("######################################################################")
 						print("I didn't get that--try again!")
+						print("######################################################################")
 					
 					
 		if ready == False:
@@ -215,7 +221,7 @@ class Player(Actor):
 		self.intellect = 1
 		self.naturalism = 1
 		#self.happiness = 1
-		self.luck = 4
+		self.luck = 40
 		self.fixed = True
 		self.soundon = True
 
@@ -369,6 +375,7 @@ class Player(Actor):
 		self.correctstr = False
 		self.businesses = []
 		self.visiting = ""
+		self.switch = False
 
 	# For breeding organisms
 		self.dam = ""
@@ -828,14 +835,19 @@ class Player(Actor):
 			place = Village()
 			self.settlements.append(place)
 			location = self.settlements.index(place)
+			print("######################################################################")
 			print("You've just founded a new village!")
+			print("######################################################################")
 			print("What would you like to name it? (Note:  It's going to get a 'ville' at the end of it!)")
+			print("######################################################################")
 			usrinput2 = input("")
 			if usrinput2:
 				self.settlements[location].name = (usrinput2+"ville").title()
 			print("Ok--you've founded {0}!".format(self.settlements[location].name))
 			print("######################################################################")
+		print("######################################################################")
 		print("Would you like to found a new village?  It'll cost {0} gold!".format(Village.cost))
+		print("######################################################################")
 		usrinput = input("")
 		if usrinput:
 			if "y" in usrinput and self.gold >= Village.cost:
@@ -853,7 +865,9 @@ class Player(Actor):
 
 	def openshop(self):
 		if self.gold >= basicShop.cost:
+			print("######################################################################")
 			print("Are you sure you want to open a shop?  It'll cost you {0} gold!".format(basicShop.cost))
+			print("######################################################################")
 			usrinput = input("")
 			if usrinput:
 				if "y" in usrinput:
@@ -861,8 +875,11 @@ class Player(Actor):
 					if not self.businesses:
 						self.businesses.append(newshop)
 						location = self.businesses.index(newshop)
+						print("######################################################################")
 						print("Congratulations--you've just opened your very first shop!")
+						print("######################################################################")
 						print("What would you like to call it?!")
+						print("######################################################################")
 						usrinput = input("")
 						self.businesses[location].name = usrinput.title()
 						print("All right--{0} will be open for business...starting tomorrow!".format(newshop.name))
@@ -881,19 +898,26 @@ class Player(Actor):
 				else:
 					print("Ooops--try again!")
 
+	def checkshop(self):
+		pass
+
 
 	def genmenagerie(self):
-		if self.visiting and self.visiting.menagerieopen == False and self.gold >= self.visiting.menageriecost:
+		if self.visiting and (self.visiting.menagerieopen == False) and (self.gold >= self.visiting.menageriecost):
+			print("######################################################################")
 			print("Would you like to found a menagerie?  This will help you attract visitors who may become residents in your settlement!")
+			print("It'll cost you {0} gold!".format(self.visiting.menageriecost))
+			print("######################################################################")
 			usrinput = input("")
 			if "y" in usrinput:
-				print("Ok--you've opened your menagerie for business!")
+				self.gold -= self.visiting.menageriecost
+				print("Ok--you've paid {0} gold and opened your menagerie for business!".format(str(self.visiting.menageriecost)))
 				print("######################################################################")
 				self.visiting.menagerieopen = True
 			else:
 				print("No problem--we'll do it another time.")
 				print("######################################################################")
-		elif self.visiting.menagerie == True:
+		elif self.visiting.menagerieopen == True:
 			print("You already have a menagerie here, and you can only have one per settlement!")
 			print("If you want to expand your menagerie, upgrade your settlement from a {0} to a {1}!".format(self.visiting.type, self.visiting.upgrade))
 			print("######################################################################")
@@ -905,13 +929,107 @@ class Player(Actor):
 			print("You can't afford to open a menagerie, yet...")
 			print("######################################################################")
 
+
+	def visitmenagerie(self):
+		self.switch = False
+		if self.visiting.menagerieopen == True:
+			menu = {
+			"add to menagerie [1]" : self.addtomenagerie,
+			"go back [0]" : self.goback
+			}
+
+			while self.switch == False:
+				if self.visiting.menagerie:
+					print("Here's what's currently in your menagerie:")
+					for organism in self.visiting.menagerie:
+						print("Name: " + organism.name)
+						print("Type: " + organism.type + "\n")
+				else:
+					print("######################################################################")
+					print("Your menagerie is currently empty!")
+					print("######################################################################")
+				for item in menu.keys():
+					print(item.title())
+				print("######################################################################")
+				print("What would you like to do?")
+				print("######################################################################")
+				usrinput = input("")
+				if usrinput.lower() in "go back":
+					break
+				for item in menu.keys():
+					if usrinput and (((usrinput.lower() in item) or (usrinput.lower() == item))):
+						menu[item]()
+						self.switch = True
+				
+
+				if self.switch == False:
+					print("######################################################################")
+					print("I didn't get that--try again!")
+					print("######################################################################")
+		elif not self.visiting.menagerie:
+			print("######################################################################")
+			print("You don't have a menagerie yet--you'll have to go buy one, first!")
+			print("######################################################################")
+
+
+
+	def addtomenagerie(self):
+		if self.bestiary and len(self.visiting.menagerie) < self.visiting.menageriesize:
+			while (len(self.visiting.menagerie) < self.visiting.menageriesize):
+				print("######################################################################")
+				print("Do you want to add someone to your menagerie?  It's currently holding a total of {0}/{1} organisms!".format(len(self.visiting.menagerie),self.visiting.menageriesize))
+				print("######################################################################")
+				usrinput = input("")
+				if "y" in usrinput and self.bestiary:
+					i = 0
+					for beast in self.bestiary:
+						beast.index = i
+						print("Index: {0}".format(beast.index))
+						print("Name: {0}".format(beast.name))
+						print("Type: {0}".format(beast.type))
+						print("Stats: ")
+						for stat in beast.stats.keys():
+							print(stat + ": " + str(beast.stats[stat]))
+						i += 1
+						print("\n")
+					print("######################################################################")
+					print("Who would you like to add to the menagerie? (Type the 'index'!)")
+					print("######################################################################")
+					usrinput = input("")
+					for beast in self.bestiary:
+						if usrinput == str(beast.index):
+							self.visiting.menagerie.append(beast)
+							self.bestiary.pop(self.bestiary.index((beast)))
+							print("######################################################################")
+							print("You've removed {0} from the bestiary and added it to the menagerie!".format(beast.name))
+							print("######################################################################")
+							self.visiting.popularity += 1
+							break
+				else:
+					print("Your bestiary is empty!")
+					break
+		elif not self.bestiary:
+			print("######################################################################")
+			print("You don't have anything in your bestiary to add, yet!")
+			print("######################################################################")
+		if len(self.visiting.menagerie) == self.visiting.menageriesize:
+			print("######################################################################")
+			print("Your menagerie is currently full ({0}/{1} organisms)!".format(len(self.visiting.menagerie), self.visiting.menageriesize))
+			print("######################################################################")
+
 	def genvisitors(self):
+		self.visiting.viscapacity = self.visiting.popularity
 		self.visiting.visitors = []
-		for i in range(self.visiting.viscapacity):
+		namelist = []
+		while len(self.visiting.visitors) < self.visiting.viscapacity:
 			newguy = organisms.NPC()
 			randpick = random.randint(0,len(newguy.namedict.keys())-1)
 			newguy.name = list(newguy.namedict.keys())[randpick]
-			self.visiting.visitors.append(newguy)
+			if newguy.name not in namelist:
+				self.visiting.visitors.append(newguy)
+			namelist.append(newguy.name)
+			randchoice = random.randint(0, len(newguy.elementslist)-1)
+			newguy.element = newguy.elementslist[randchoice]
 
 
 	def attractresidents(self):
@@ -944,27 +1062,44 @@ class Player(Actor):
 		"scavenge [1]" : self.scavenge,
 		"open a shop [2]" : self.openshop,
 		"open a menagerie [3]" : self.genmenagerie,
+		"visit menagerie [4]" : self.visitmenagerie,
 		"go back (leave settlement) [0]" : self.goback
 		}
 
 		if self.settlements:
 			self.correctstr = False
+			print("### VISIT SETTLEMENTS ###")
+			print("######################################################################")
 			for settlement in self.settlements:
 				print(settlement.name.title())
-			print("Which settlement would you like to visit?")
+			print("######################################################################")
+			print("Which settlement would you like to visit? (or 'go back')")
+			print("######################################################################")
 			usrinput = input("")
+			if usrinput.lower() in "go back":
+				self.goback()
+				return
 			if usrinput != "":
 				for settlement in self.settlements:
 					if usrinput.lower() in settlement.name.lower():
 						settlement.visit(self)
 						self.genvisitors()
-						print("Current visitors:")
+						print("Current Visitors:")
 						for visitor in self.visiting.visitors:
-							print(visitor.name)
+							print(visitor.name.title())
+							print("Element: " + visitor.element.title() + "\n")
+						print("######################################################################")
+				if usrinput.lower() not in settlement.name.lower():
+					print("Ooops--I don't think you have a settlement by that name.  Try again.")
 				while self.brokenloop == False:
+					print("\n")
+					print("### VISITING {0} ###".format(self.visiting.name.upper()))
+					print("\n")
 					for choice in choices.keys():
 						print(choice.title())
+					print("######################################################################")
 					print("What would you like to do while in {0}?".format(self.visiting.name))
+					print("######################################################################")
 					newinput = input("")
 					if newinput:
 						for choice in choices:
@@ -989,8 +1124,11 @@ class Player(Actor):
 					else:
 						print("Whoops--enter an option!")
 				else:
+					self.brokenloop = False
 					print("Enter a choice and we'll head that way!")
-
+			else:
+				print("I didn't get that settlement name--try again!")
+		
 		else:
 			print("You haven't founded any settlements, yet!")
 
@@ -1022,7 +1160,7 @@ class Player(Actor):
 		if self.companion:
 			print("{0}'s HP: ".format(self.companion.name) + str(self.companion.stats["HP"]))
 		if self.target:
-			print("Opponent HP: " + str(self.target.stats["HP"]))
+			print("{0}'s' HP: ".format(self.target.name) + str(self.target.stats["HP"]))
 		print("######################################################################")
 
 	def checkstats(self):
@@ -1065,6 +1203,7 @@ class Player(Actor):
 			print("You can: ")
 			for option in encoptions.keys():
 				print(option.title())
+			print("######################################################################")
 			userinput = input("")
 			choice = ""
 			proceed = False
@@ -1113,8 +1252,10 @@ class Player(Actor):
 		if self.currentenv:
 			while self.brokenloop == False:
 				print("You're currently in {0}.  What would you like to do?  You can: ".format(self.currentenv.name))
+				print("\n")
 				for choice in self.envoptions.keys():
 					print("\t" + choice.capitalize())
+				print("######################################################################")
 				userinput = input("")
 				goahead = False
 				for choice in self.envoptions.keys():
@@ -1173,6 +1314,7 @@ class Player(Actor):
 	# Go exploring in the world!
 	def explorenew(self):
 		print("\n ### EXPLORE A NEW ENVIRONMENT ### ")
+		print("######################################################################")
 		while self.currentenv:
 			print("Are you sure you want to leave {0}?".format(self.currentenv.name))
 			userinput = input("")
@@ -1184,8 +1326,10 @@ class Player(Actor):
 				print("I didn't get that--try again!")
 		for env in self.envlist:
 			print(env.title())
+		print("######################################################################")
 		self.currentenv = ""
 		print("Great!  Where would you like to go? It can be anywhere listed above!")
+		print("######################################################################")
 		while True:
 			userinput = input("")
 			if userinput.lower() in self.envlist.keys():
@@ -1423,7 +1567,9 @@ class Player(Actor):
 		print("\n ### GO LOOKING FOR THINGS (REASONABLE) ### ")
 		print("You go looking for things in a reasonable way.")
 		if not self.currentenv.occupants:
+			print("######################################################################")
 			print("There's nothing here...try another environment!")
+			print("######################################################################")
 			return
 
 		def makerandom(self):
@@ -1767,11 +1913,11 @@ class Player(Actor):
 
 	
 ### TO BE USED IN GAMEPLAY ###
-popmain = Population()
+#popmain = Population()
 
 ### TO BE USED IN DEVELOPMENT ###
-#debugpop = Population()
-#debugpop.popmaster = organisms.dummypop
+debugpop = Population()
+debugpop.popmaster = organisms.dummypop
 
 
 
