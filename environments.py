@@ -116,7 +116,7 @@ class basicShop(basicEnv):
 		self.firstone = False
 		self.mascot = ""
 		self.forsale = []
-		self.space = 3
+		self.counterspace = 3
 		self.earnings = 0
 		self.sold = []
 

@@ -64,6 +64,7 @@ class gameObject(object):
 	def __init__(self):
 		self.name = name
 		self.price = 1
+		self.index = ""
 
 class Food(gameObject):
 	def __init__(self):

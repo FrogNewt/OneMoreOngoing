@@ -14,7 +14,8 @@ import time
 
 
 
-
+#debugging
+grains = organisms.hpFood()
 
 def begingame():
 	def start():
@@ -344,7 +345,7 @@ class Player(Actor):
 		}
 
 	# Stuff the player has
-		self.inventory = []
+		self.inventory = [grains]
 		self.gold = 1000
 		self.equipment = []
 		self.bestiary = []
@@ -961,8 +962,9 @@ class Player(Actor):
 	def checkshop(self):
 		shopmenu = {
 		"put something up for sale [1]" : self.sellatshop,
-		"check earnings [2]" : self.checkearnings,
-		"set the shop mascot [3]" : self.setmascot,
+		"view my wares [2]" : self.viewmywares,
+		"check earnings [3]" : self.checkearnings,
+		"set the shop mascot [4]" : self.setmascot,
 		"go back [0]" : self.goback
 
 		}
@@ -982,16 +984,108 @@ class Player(Actor):
 					if usrinput.lower() in menuitem.lower():
 						shopmenu[menuitem]()
 
+	def removefromshop(self):
+		while True and self.patron.forsale:
+			hit = False
+			print("######################################################################")
+			print("### REMOVE ITEMS FROM MARKET ###")
+			print("######################################################################")
+			print("")
+			i = 0
+			for item in self.patron.forsale:
+				item.index = i
+				print(item.name.title())
+				print("Cost: " + item.cost)
+				print("Index: " + i)
+				i += 1
+			print("")
+			print("What do you want to remove from the market? (Type the index)")
+			usrinput = input("")
+			for item in self.patron.forsale:
+				if item.index == usrinput:
+					self.inventory.append(item)
+					print("You've taken {0} off the market--back into inventory!".format(item.name))
+					self.patron.forsale.pop(self.patron.forsale.index(item))
+					hit = True
+			if hit == True:
+				print("Want to remove anything else?")
+				usrinput2 = input("")
+				if "y" in userinput2:
+					pass
+				else:
+					break
+		else:
+			print("Your marketplace is empty!")
 
 
+	def viewmywares(self):
+		if self.patron.forsale:
+			print("######################################################################")
+			print("### VIEW MY WARES ###")
+
+			print("")
+			print("Here's what you have for sale right now:")
+			for item in self.patron.forsale:
+				print("\tItem: " + str(item.name.title()))
+				print("\tCost: " + str(item.cost) + " gold")
+				print("")
+		else:
+			print("######################################################################")
+			print("You don't have anything up for sale, right now.")
+			print("######################################################################")
+			print("")
 
 	def sellatshop(self):
 		if self.inventory:
-			for item in self.inventory:
-				print(item.name)
-			print("What would you like to sell?")
+			self.switch = False
+			while self.switch == False and self.inventory:
+				if self.patron.counterspace > len(self.patron.forsale):
+					print("Available from inventory:")
+					for item in self.inventory:
+						print("\t" + item.name.title())
+					print("")
+					print("What would you like to sell? (or you can type 'leave')")
+					usrinput = input("")
+					if 'leave' in usrinput:
+						print("Ok--we'll sell things later.")
+						break
+					for item in self.inventory:
+						if usrinput.lower() in item.name.lower():
+							print("How much do you want to sell it for? (Enter any price in gold above zero--just the number!)")
+							usrinput2 = input("")
+							if str.isdigit(usrinput2) and int(usrinput2) != 0:
+								self.patron.forsale.append(item)
+								itemindex = self.patron.forsale.index(item)
+								self.patron.forsale[itemindex].cost = int(usrinput2)
+								print("Ok--you've put the {0} up for {1} gold!".format(item.name, str(self.patron.forsale[itemindex].cost)))
+								invindex = self.inventory.index(item)
+								self.inventory.pop(invindex)
+								print("(Press enter to continue)")
+								input("")
+								if self.inventory:
+									print("Do you want to sell anything else?")
+									usrinput3 = input("")
+									if "y" in usrinput3:
+										pass
+									else:
+										self.switch = True
+										break
+							else:
+								print("Ooops--enter an integer (a whole number) greater than zero!")
+
+							break
+				elif not self.inventory and self.patron.counterspace < len(self.patron.forsale):
+					print("You're out of things to sell AND you're out of counter-space!")
+				elif not self.inventory:
+					print("You don't have anything left to sell!")
+				else:
+					print("You don't have the space for that--come back when something has sold (or take something off the market)!")
+					break
+			
 		else:
+			print("######################################################################")
 			print("You don't have anything to sell, yet.")
+			print("######################################################################")
 
 	def setmascot(self):
 		if self.bestiary:
@@ -1251,65 +1345,68 @@ class Player(Actor):
 
 		if self.settlements:
 			self.correctstr = False
-			print("### VISIT SETTLEMENTS ###")
-			print("######################################################################")
-			for settlement in self.settlements:
-				print(settlement.name.title())
-			print("######################################################################")
-			print("Which settlement would you like to visit? (or 'go back')")
-			print("######################################################################")
-			usrinput = input("")
-			if usrinput.lower() in "go back":
-				self.goback()
-				return
-			if usrinput != "":
+			while self.brokenloop == False:
+				print("### VISIT SETTLEMENTS ###")
+				print("######################################################################")
 				for settlement in self.settlements:
-					if usrinput.lower() in settlement.name.lower():
-						settlement.visit(self)
-						self.genvisitors()
-						print("Current Visitors:")
-						for visitor in self.visiting.visitors:
-							print(visitor.name.title())
-							print("Element: " + visitor.element.title() + "\n")
-						print("######################################################################")
-				if usrinput.lower() not in settlement.name.lower():
-					print("Ooops--I don't think you have a settlement by that name.  Try again.")
-				while self.brokenloop == False:
-					print("\n")
-					print("### VISITING {0} ###".format(self.visiting.name.upper()))
-					print("\n")
-					for choice in choices.keys():
-						print(choice.title())
+					print(settlement.name.title())
 					print("######################################################################")
-					print("What would you like to do while in {0}?".format(self.visiting.name))
+					print("Which settlement would you like to visit? (or 'go back')")
 					print("######################################################################")
-					newinput = input("")
-					if newinput:
-						for choice in choices:
-							if newinput.lower() in choice.lower():
-								if "go back" in choice:
+					usrinput = input("")
+					if usrinput.lower() in "go back":
+						self.goback()
+						return
+					if usrinput != "":
+						if usrinput.lower() not in settlement.name.lower():
+							print("Ooops--I don't think you have a settlement by that name.  Try again.")
+						elif usrinput.lower() in settlement.name.lower():
+							for settlement in self.settlements:
+								if usrinput.lower() in settlement.name.lower():
+									settlement.visit(self)
+									self.genvisitors()
+									print("Current Visitors:")
+									for visitor in self.visiting.visitors:
+										print(visitor.name.title())
+										print("Element: " + visitor.element.title() + "\n")
 									print("######################################################################")
-									print("Are you sure you want to leave {0}?".format(self.visiting.name))
-									lastcall = input("")
-									if "y" in lastcall:
-										choices[choice]()
-										self.correctstr = True
-									else:
-										print("Ok--sticking around a little longer.")
-										print("######################################################################")
-										self.correctstr = True
+							
+							while self.brokenloop == False:
+								print("\n")
+								print("### VISITING {0} ###".format(self.visiting.name.upper()))
+								print("\n")
+								for choice in choices.keys():
+									print(choice.title())
+								print("######################################################################")
+								print("What would you like to do while in {0}?".format(self.visiting.name))
+								print("######################################################################")
+								newinput = input("")
+								if newinput:
+									for choice in choices:
+										if newinput.lower() in choice.lower():
+											if "go back" in choice:
+												print("######################################################################")
+												print("Are you sure you want to leave {0}?".format(self.visiting.name))
+												lastcall = input("")
+												if "y" in lastcall:
+													choices[choice]()
+													self.correctstr = True
+												else:
+													print("Ok--sticking around a little longer.")
+													print("######################################################################")
+													self.correctstr = True
+											else:
+												choices[choice]()
+												self.correctstr = True
+												break
+									if self.correctstr == False:
+										print("I didn't get that--try again!")
 								else:
-									choices[choice]()
-									self.correctstr = True
-									break
-						if self.correctstr == False:
-							print("I didn't get that--try again!")
-					else:
-						print("Whoops--enter an option!")
-				else:
-					self.brokenloop = False
-			else:
-				print("I didn't get that settlement name--try again!")
+									print("Whoops--enter an option!")
+							else:
+								self.brokenloop = False
+						else:
+							print("I didn't get that settlement name--try again!")
 		
 		else:
 			print("You haven't founded any settlements, yet!")
