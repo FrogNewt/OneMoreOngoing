@@ -5,9 +5,11 @@ import os
 import re
 import pickle
 import organisms
+import creatures
 import random
 from shufflecipher import *
 from environments import *
+import classicenvironments
 import pygame
 import time
 
@@ -23,11 +25,11 @@ def begingame():
 		#pygame.mixer.music.load('woodfrog.wav')
 		#pygame.mixer.music.play()
 
-		print("Please hold--we're shuffling all your organisms into the game!\n")
+		
 		
 		
 		### USE DEBUGPOP FOR BUILDING; USE POPMAIN FOR NORMAL GAMES ###
-		popmain.shufflebegin()
+		
 		newplayer = Player()
 		print("Hey--what's your name?")
 		userinput = input("")
@@ -37,7 +39,6 @@ def begingame():
 		
 		### USE POPMAIN FOR NORMAL GAMES AND DEBUGPOP FOR BUILDING ###
 		#newplayer.popmaster = popmain.popmaster
-		newplayer.popmaster = popmain.popmaster
 
 		print("Oh--before we get started, we should pick a game mode!")
 		print("(Press any key to continue)")
@@ -65,6 +66,23 @@ def begingame():
 				gameready = True
 			else:
 				print("I didn't get your choice--can you try again? (type either 'fixed' or 'flex'")
+		print("And would you rather play a modern, 'organism'-driven game or a classic 'rpg'-style game?")
+		gameready = False
+		while gameready == False:
+			print("What would you prefer? (type 'organism' or 'rpg')")
+			flexchoice = input("")
+			if "o" in flexchoice.lower():
+				newplayer.mode = "organism"
+				gameready = True
+				print("Please hold--we're shuffling all your organisms into the game!\n")
+				popmain.shufflebegin()
+				newplayer.popmaster = popmain.popmaster
+			elif "p" in flexchoice.lower():
+				newplayer.mode = "rpg"
+				gameready = True
+			else:
+				print("I didn't get your choice--can you try again? (type either 'organism' or 'rpg'")
+
 		soundready = False
 		while soundready == False:
 			print("One last thing--would you like to begin with sound 'on' or 'off'?")
@@ -73,10 +91,13 @@ def begingame():
 				print("Sound on!")
 				import pygame
 				newplayer.soundon = True
+				newplayer.musicon = True
+				pygame.mixer.init()
 				soundready = True
 			elif "f" in soundinput:
 				print("Sound off!")
 				newplayer.soundon = False
+				newplayer.musicon = False
 				soundready = True
 			else:
 				print("I didn't get that--try again!")
@@ -122,6 +143,7 @@ def begingame():
 
 def choosenext(self):
 	while True:
+		self.playmusic("Music/Vanadiel_March_1.ogg")
 		print("######################################################################")
 		print("So, {0}, what would you like to do next?  You can choose from any of these (or 'quit'):\n".format(self.name))
 		for key in self.optionlist.keys():
@@ -184,11 +206,14 @@ class gameObject(object):
 # Used in generating the initial population list
 class Population(gameObject):
 	def __init__(self):
-		self.name = "Population Master"
+		self.name = "Organism-Mode Population Master"
 		self.popmaster = []
 	def shufflebegin(self, poplist = ""):
 		opened = organisms.openitup()
 		self.popmaster = organisms.shuffleboth(organisms.givetype(organisms.scrapetypes(organisms.populatemaster(opened))))
+	#def rpgbegin(self, poplist = ""):
+	#	self.name = "RPG-Mode Population Master"
+	#	self.popmaster = creatures
 
 
 
@@ -226,6 +251,7 @@ class Player(Actor):
 		self.luck = 40
 		self.fixed = True
 		self.soundon = True
+		self.musicon = True
 
 	# USABLE Player stats--reference these in combat/interactions (rather than the originals)
 		self.stats = {
@@ -256,12 +282,13 @@ class Player(Actor):
 		self.orgsdict = {
 		"set companion [1]" : self.setcompanion,
 		"inspect companion [2]" : self.examinecompanion,
-		"feed companion [3]" : self.feedcompanion,
-		"rest companion [4]" : self.restcompanion,
-		"check resting organisms [5]" : self.checkresting,
-		"breed organisms [6]" : self.breed,
-		"view nursery [7]" : self.checknursery,
-		"view bestiary [8]" : self.examinebestiary,
+		"rename companion [3]" : self.renamecompanion,
+		"feed companion [4]" : self.feedcompanion,
+		"rest companion [5]" : self.restcompanion,
+		"check resting organisms [6]" : self.checkresting,
+		"breed organisms [7]" : self.breed,
+		"view nursery [8]" : self.checknursery,
+		"view bestiary [9]" : self.examinebestiary,
 		"go back [0]" : self.goback
 
 		}
@@ -291,7 +318,8 @@ class Player(Actor):
 		self.settingsmenu = {
 		"toggle flex [1]" : self.toggleflex,
 		"toggle sound [2]" : self.togglesound,
-		"save game [3]" : self.save,
+		"toggle music [3]" : self.togglemusic,
+		"save game [4]" : self.save,
 		"go back [0]" : self.goback
 		}
 
@@ -327,13 +355,21 @@ class Player(Actor):
 		}
 
 	# Lists the possible environments available
-		self.envlist = {
+		self.orgenvlist = {
 			"meadow" : Meadow,
 			"bog" : Bog,
 			"swamp" : Swamp,
 			"woods" : Woods,
 			"plains" : Plain,
 			"dark forest" : darkForest
+		}
+		self.rpgenvlist = {
+			"meadow" : classicenvironments.Meadow,
+			"bog" : classicenvironments.Bog,
+			"swamp" : classicenvironments.Swamp,
+			"woods" : classicenvironments.Woods,
+			"plains" : classicenvironments.Plain,
+			"dark forest" : classicenvironments.darkForest
 		}
 
 	# Lists the options available to a player within a given environment
@@ -356,6 +392,7 @@ class Player(Actor):
 	
 	# Things the player may need to "hold" in order to advance the game
 		self.randomnum = 0
+		self.mode = "modern"
 		self.currentenv = ""
 		self.currentoccupants = []
 		self.target = []
@@ -729,6 +766,7 @@ class Player(Actor):
 
 	def checkinventory(self):
 		print("\n ### CHECK INVENTORY ### ")
+		print("Gold: {0}".format(self.gold))
 		if self.inventory:
 			print("Here's what you have in your inventory right now:")
 			for element in self.inventory:
@@ -769,17 +807,26 @@ class Player(Actor):
 			offspring = [newbaby]
 
 			# Gives newbaby a name that's half its mom and half its dad
-			species = self.sire.name.split()
-			if len(species) > 1:
-				species = species[1]
-			else:
-				species = species[0]
-			genus = self.dam.name.split()
-			genus = genus[0]
-			organisms.givetype(offspring)
-			newbaby = offspring[0]
-			newbaby.name = genus.capitalize() + " " + species.lower()
-			newbaby.evolvable = False
+			if self.mode = "organism":	
+				species = self.sire.name.split()
+				if len(species) > 1:
+					species = species[1]
+				else:
+					species = species[0]
+				genus = self.dam.name.split()
+				genus = genus[0]
+				organisms.givetype(offspring)
+				newbaby = offspring[0]
+				newbaby.name = genus.capitalize() + " " + species.lower()
+				newbaby.evolvable = False
+			if self.mode = "rpg":
+				randomnum = random.randint(0,1)
+				if randomnum == 1:
+					newbaby.name = self.sire.species
+					newbaby.species = self.sire.species
+				elif randomnum == 0:
+					newbaby.name = self.dam.species
+					newbaby.species = self.dam.species
 
 
 			hybridvigor = False
@@ -838,7 +885,7 @@ class Player(Actor):
 			self.bestiary.append(newbaby)
 		else:
 			print("Looks like the baby's not ready yet--the parents are still nesting!  Come back tomorrow.")
-			print("######################################################################")
+			print("######################################################################\n")
 
 
 	def actexpdump(self):
@@ -856,6 +903,7 @@ class Player(Actor):
 	def foundnew(self):
 		def found(self):
 			place = Village()
+			place.viscapacity += place.popularity
 			self.settlements.append(place)
 			location = self.settlements.index(place)
 			print("######################################################################")
@@ -868,6 +916,7 @@ class Player(Actor):
 				self.settlements[location].name = (usrinput2+"ville").title()
 			print("Ok--you've founded {0}!".format(self.settlements[location].name))
 			print("######################################################################")
+
 		print("######################################################################")
 		print("Would you like to found a new village?  It'll cost {0} gold!".format(Village.cost))
 		print("######################################################################")
@@ -924,10 +973,13 @@ class Player(Actor):
 	def pickshop(self):
 		if self.visiting.businesses:
 			while not self.patron:
+				print("######################################################################")
 				print("Which shop do you want to visit?")
+				print("######################################################################")
 				for business in self.visiting.businesses:
 					print(business.name.title())
-				print("\n")
+				print("######################################################################")
+				print("")
 				usrinput = input("")
 				for shop in self.visiting.businesses:
 					if usrinput.lower() in shop.name.lower():
@@ -940,46 +992,78 @@ class Player(Actor):
 			self.checkshop()
 			self.patron = ""
 		else:
+			print("######################################################################")
 			print("{0} doesn't have any shops, yet!".format(self.visiting.name))
+			print("######################################################################")
 
 
 	def checkearnings(self):
-		if self.patron.earnings:
+		if self.patron.sold:
 			print("It looks like you've sold:")
+			print("")
 			for solditem in self.patron.sold:
-				print(solditem.name + "for " + solditem.price)
+				print(solditem.name.title() + " " + "for " + str(solditem.price) + " " + "to " + solditem.boughtby.title())
 				input("")
 			self.gold += self.patron.earnings
 			print("######################################################################")
 			print("You've earned {0} gold!".format(self.patron.earnings))
 			print("######################################################################")
 			self.patron.earnings = 0
+			self.patron.sold.pop(self.patron.sold.index(solditem))
 		else:
 			print("######################################################################")
 			print("You haven't sold anything, yet!")
-			print("######################################################################")
+			print("######################################################################\n")
+			input("")
+
+	def inspectshoppers(self):
+		if self.patron.shoppers:
+			for shopper in self.patron.shoppers:
+				print("Name: " + shopper.name.title())
+				print("Preference: " + shopper.likes.title())
+				print("Likes this element: " + shopper.element.title())
+				print("Is this aloof:" + str(shopper.aloofness))
+				print("Had this level of interest in the shop: " + str(shopper.comfort))
+				if shopper.targetitem:
+					print("Looking at: " + shopper.targetitem.name)
+					print("Has {0} interest in buying it...".format(shopper.buyinterest))
+				print("Has {0} gold!".format(shopper.gold))
+				print("")
+		else:
+			print("You currently have no shoppers")
+
 
 	def checkshop(self):
 		shopmenu = {
 		"put something up for sale [1]" : self.sellatshop,
-		"view my wares [2]" : self.viewmywares,
-		"check earnings [3]" : self.checkearnings,
-		"set the shop mascot [4]" : self.setmascot,
+		"remove something from the market [2]" : self.removefromshop,
+		"inspect shoppers [9]" : self.inspectshoppers,
+		"view my wares [3]" : self.viewmywares,
+		"check earnings [4]" : self.checkearnings,
+		"set the shop mascot [5]" : self.setmascot,
 		"go back [0]" : self.goback
-
 		}
+		self.patron.shoppers = []
+		for visitor in self.visiting.peoplepresent:
+			visitor.shop(self)
+
 		if self.patron:
-			self.brokenloop = False
-			while self.brokenloop == False:
+			self.switch = False
+			while self.switch == False:
+				print("######################################################################")
 				print("### MANAGE SHOP ({0}) ### \n".format(self.patron.name.upper()))
+				print("######################################################################")
 				if self.patron.mascot:
+					print("")
 					print("Current shop mascot:")
-					print(self.patron.mascot.name + "({0})".format(self.patron.mascot.type))
+					print(self.patron.mascot.name + " ({0})".format(self.patron.mascot.type))
 					print("")
 				for menuitem in shopmenu.keys():
 					print(menuitem.title())
 				print("\nWhat do you want to do at {0}?".format(self.patron.name))
 				usrinput = input("")
+				if usrinput.lower() in "go back":
+					break
 				for menuitem in shopmenu.keys():
 					if usrinput.lower() in menuitem.lower():
 						shopmenu[menuitem]()
@@ -995,27 +1079,39 @@ class Player(Actor):
 			for item in self.patron.forsale:
 				item.index = i
 				print(item.name.title())
-				print("Cost: " + item.cost)
-				print("Index: " + i)
+				print("Cost: " + str(item.price))
+				print("Index: " + str(i))
 				i += 1
+				print("\n")
 			print("")
-			print("What do you want to remove from the market? (Type the index)")
+			print("What do you want to remove from the market? (Type the index or 'leave')")
 			usrinput = input("")
+			if ('leave' in usrinput) or 'leave' == usrinput:
+				print("Leaving!")
+				break
 			for item in self.patron.forsale:
-				if item.index == usrinput:
+				if str(item.index) == usrinput:
 					self.inventory.append(item)
+					print("######################################################################")
 					print("You've taken {0} off the market--back into inventory!".format(item.name))
+					print("######################################################################")
+					input("")
 					self.patron.forsale.pop(self.patron.forsale.index(item))
 					hit = True
 			if hit == True:
 				print("Want to remove anything else?")
 				usrinput2 = input("")
-				if "y" in userinput2:
+				if "y" in usrinput2:
 					pass
 				else:
 					break
+			else:
+				print("I didn't get that--type the index of the item you want to remove!")
 		else:
+			print("######################################################################")
 			print("Your marketplace is empty!")
+			print("######################################################################\n")
+			input("")
 
 
 	def viewmywares(self):
@@ -1027,7 +1123,7 @@ class Player(Actor):
 			print("Here's what you have for sale right now:")
 			for item in self.patron.forsale:
 				print("\tItem: " + str(item.name.title()))
-				print("\tCost: " + str(item.cost) + " gold")
+				print("\tCost: " + str(item.price) + " gold")
 				print("")
 		else:
 			print("######################################################################")
@@ -1040,6 +1136,7 @@ class Player(Actor):
 			self.switch = False
 			while self.switch == False and self.inventory:
 				if self.patron.counterspace > len(self.patron.forsale):
+					print("######################################################################")
 					print("Available from inventory:")
 					for item in self.inventory:
 						print("\t" + item.name.title())
@@ -1051,13 +1148,15 @@ class Player(Actor):
 						break
 					for item in self.inventory:
 						if usrinput.lower() in item.name.lower():
+							print("######################################################################")
 							print("How much do you want to sell it for? (Enter any price in gold above zero--just the number!)")
 							usrinput2 = input("")
+							print("######################################################################")
 							if str.isdigit(usrinput2) and int(usrinput2) != 0:
 								self.patron.forsale.append(item)
 								itemindex = self.patron.forsale.index(item)
-								self.patron.forsale[itemindex].cost = int(usrinput2)
-								print("Ok--you've put the {0} up for {1} gold!".format(item.name, str(self.patron.forsale[itemindex].cost)))
+								self.patron.forsale[itemindex].price = int(usrinput2)
+								print("Ok--you've put the {0} up for {1} gold!".format(item.name, str(self.patron.forsale[itemindex].price)))
 								invindex = self.inventory.index(item)
 								self.inventory.pop(invindex)
 								print("(Press enter to continue)")
@@ -1105,12 +1204,14 @@ class Player(Actor):
 				for beast in self.bestiary:
 					if usrinput == str(beast.index):
 						self.patron.mascot = beast
+						self.bestiary.pop(self.bestiary.index(self.patron.mascot))
 						break
-				print("You've set {0} as the {1} mascot!".format(self.patron.mascot.name, self.patron.name))
-				input("")
-				print("######################################################################")
-			elif self.mascot:
-				print("{0}'s current mascot is {1}--do you want to replace it?".format(self.patron.name, self.patron.mascot.name))
+				if self.patron.mascot:
+					print("You've set {0} as the {1} mascot!".format(self.patron.mascot.name, self.patron.name))
+					input("")
+					print("######################################################################")
+			elif self.patron.mascot:
+				print("{0}'s current mascot is {1} (a {2})--do you want to replace it?".format(self.patron.name, self.patron.mascot.name, self.patron.mascot.type))
 				usrinput = input("")
 				if "y" in usrinput:
 					print("Prospective mascots:\n")
@@ -1128,6 +1229,7 @@ class Player(Actor):
 					for beast in self.bestiary:
 						if usrinput == str(beast.index):
 							self.patron.mascot = beast
+							self.bestiary.pop(self.bestiary.index(beast))
 							break
 				else:
 					print("Ok--we'll leave {0} as the mascot for now!".format(self.patron.mascot.name))
@@ -1286,7 +1388,7 @@ class Player(Actor):
 					break
 		elif not self.bestiary:
 			print("######################################################################")
-			print("You don't have anything in your bestiary to add, yet!")
+			print("You don't have anyone in your bestiary to add, yet!")
 			print("######################################################################")
 		if len(self.visiting.menagerie) == self.visiting.menageriesize:
 			print("######################################################################")
@@ -1294,25 +1396,88 @@ class Player(Actor):
 			print("######################################################################")
 
 	def genvisitors(self):
-		self.visiting.viscapacity = self.visiting.popularity
 		self.visiting.visitors = []
+		self.visiting.peoplepresent = self.visiting.residents
 		namelist = []
+		for person in self.visiting.peoplepresent:
+			namelist.append(person.name)
 		while len(self.visiting.visitors) < self.visiting.viscapacity:
 			newguy = organisms.NPC()
 			randpick = random.randint(0,len(newguy.namedict.keys())-1)
 			newguy.name = list(newguy.namedict.keys())[randpick]
 			if newguy.name not in namelist:
 				self.visiting.visitors.append(newguy)
+				newguy.visitor = self.visiting
 			namelist.append(newguy.name)
 			randchoice = random.randint(0, len(newguy.elementslist)-1)
 			newguy.element = newguy.elementslist[randchoice]
+			randpref = random.randint(0, len(newguy.preflist)-1)
+			newguy.likes = newguy.preflist[randpref]
+			if newguy.element == self.visiting.element:
+				newguy.comfort *= 2
+			newguy.gold *= ((self.luck + self.intellect) // 2)
+		self.visiting.peoplepresent = self.visiting.visitors + self.visiting.residents
+			
+
+	def genresidents(self):
+		shortnames = []
+		if self.visiting.visitors and len(self.visiting.residents) < self.visiting.rescapacity:
+			for visitor in self.visiting.visitors:
+				if self.visiting.menagerie:
+					for org in self.visiting.menagerie:
+						if visitor.likes == org.type:
+							visitor.comfort *= 2
+			print("\n### RESIDENT UPDATE ###")
+			converted = 0
+			for visitor in self.visiting.visitors:	
+				if (visitor.comfort >= self.visiting.resthreshold) and visitor.name not in shortnames:
+					self.visiting.residents.append(visitor)
+					shortnames.append(visitor.name)
+					print("{0} has decided to become a resident!".format(visitor.name.title()))
+					input("")
+					converted += 1
+			if converted == 0:
+				print("######################################################################")
+				print("No one moved in to your settlement, today.")
+				input("")
+				print("######################################################################")
+			print("")
+			print("\n### END OF RESIDENT UPDATE ###\n")
+		elif len(self.visiting.residents) == self.visiting.rescapacity:
+			print("Your {0} is currently full on residents!  Upgrade it if you want more people running around!".format(self.visiting.type))
 
 
-	def attractresidents(self):
-		pass
+	def meetresidents(self):
+		if self.visiting.residents:
+			for resident in self.visiting.residents:
+				print("\t" + resident.name.title())
+				if resident.likes != "Pokemon" or "Fish":
+					print("\t" + "Likes: " + resident.likes.title() + "s")
+				else:
+					print("\t" + "Likes: " + resident.likes.title())
+				print("\t" + "Element: " + resident.element.title())
+				print("")
+		else:
+			print("######################################################################")
+			print("{0} currently has no residents.".format(self.visiting.name.title()))
+			print("######################################################################")
 
-	def approachstrangers(self):
-		pass
+	def greetvisitors(self):
+		if self.visiting.visitors:
+			for visitor in self.visiting.visitors:
+				print("\t" + visitor.name.title())
+				print("\t" + "Element: " + visitor.element.title())
+				print("")
+		else:
+			print("######################################################################")
+			print("{0} currently has no visitors.".format(self.visiting.name.title()))
+			print("######################################################################")
+
+	def checkweather(self):
+		print("######################################################################")
+		print("{0} is currently {1}!".format(self.visiting.name.title(), self.visiting.weather))
+		input("")
+		print("######################################################################")
 
 	def scavenge(self):
 		scavroll = random.randint(0,len(organisms.masteritems) - 1) 
@@ -1321,6 +1486,7 @@ class Player(Actor):
 		if self.visiting and self.scavenged == False:
 			if youfound.rarity <= self.luck:
 				print("You go looking around {0} and find {1}!".format(self.visiting.name, youfound.name))
+				input("")
 				self.inventory.append(youfound)
 				self.scavenged = True
 				print("######################################################################")
@@ -1340,6 +1506,9 @@ class Player(Actor):
 		"check on shop [3]" : self.pickshop,
 		"open a menagerie [4]" : self.genmenagerie,
 		"visit menagerie [5]" : self.visitmenagerie,
+		"meet residents [6]" : self.meetresidents,
+		"greet visitors [7]" : self.greetvisitors,
+		"check weather [8]" : self.checkweather, 
 		"go back (leave settlement) [0]" : self.goback
 		}
 
@@ -1349,64 +1518,69 @@ class Player(Actor):
 				print("### VISIT SETTLEMENTS ###")
 				print("######################################################################")
 				for settlement in self.settlements:
-					print(settlement.name.title())
-					print("######################################################################")
-					print("Which settlement would you like to visit? (or 'go back')")
-					print("######################################################################")
-					usrinput = input("")
-					if usrinput.lower() in "go back":
-						self.goback()
-						return
-					if usrinput != "":
-						if usrinput.lower() not in settlement.name.lower():
+					print("\t" + settlement.name.title())
+				print("")
+				print("######################################################################")
+				print("Which settlement would you like to visit? (or 'go back')")
+				print("######################################################################")
+				usrinput = input("")
+				if usrinput.lower() in "go back" or usrinput.lower() == "go back":
+					self.goback()
+					return
+				if usrinput != "":
+					wham = False
+					for settlement in self.settlements:
+						if usrinput.lower() in settlement.name.lower() or (usrinput.lower() == settlement.name.lower()):
+							settlement.visit(self)
+							wham = True
+							self.genvisitors()
+							print("Current Visitors:")
+							for visitor in self.visiting.visitors:
+								print(visitor.name.title())
+								print("Element: " + visitor.element.title() + "\n")
+							print("######################################################################")
+					if wham == False:
 							print("Ooops--I don't think you have a settlement by that name.  Try again.")
-						elif usrinput.lower() in settlement.name.lower():
-							for settlement in self.settlements:
-								if usrinput.lower() in settlement.name.lower():
-									settlement.visit(self)
-									self.genvisitors()
-									print("Current Visitors:")
-									for visitor in self.visiting.visitors:
-										print(visitor.name.title())
-										print("Element: " + visitor.element.title() + "\n")
-									print("######################################################################")
-							
-							while self.brokenloop == False:
-								print("\n")
-								print("### VISITING {0} ###".format(self.visiting.name.upper()))
-								print("\n")
-								for choice in choices.keys():
-									print(choice.title())
-								print("######################################################################")
-								print("What would you like to do while in {0}?".format(self.visiting.name))
-								print("######################################################################")
-								newinput = input("")
-								if newinput:
-									for choice in choices:
-										if newinput.lower() in choice.lower():
-											if "go back" in choice:
-												print("######################################################################")
-												print("Are you sure you want to leave {0}?".format(self.visiting.name))
-												lastcall = input("")
-												if "y" in lastcall:
-													choices[choice]()
-													self.correctstr = True
-												else:
-													print("Ok--sticking around a little longer.")
-													print("######################################################################")
-													self.correctstr = True
-											else:
-												choices[choice]()
-												self.correctstr = True
-												break
-									if self.correctstr == False:
-										print("I didn't get that--try again!")
-								else:
-									print("Whoops--enter an option!")
-							else:
-								self.brokenloop = False
+						
+					while self.brokenloop == False:
+						print("\n")
+						print("######################################################################")
+						print("### VISITING {0} ###".format(self.visiting.name.upper()))
+						print("######################################################################")
+						print("\n")
+						for choice in choices.keys():
+							print(choice.title())
+						print("######################################################################")
+						print("What would you like to do while in {0}?".format(self.visiting.name))
+						print("######################################################################")
+						newinput = input("")
+						if newinput:
+							for choice in choices:
+								if newinput.lower() in choice.lower():
+									if "go back" in choice:
+										print("######################################################################")
+										print("Are you sure you want to leave {0}?".format(self.visiting.name))
+										lastcall = input("")
+										if "y" in lastcall:
+											self.genresidents()
+											choices[choice]()
+											self.correctstr = True
+										else:
+											print("Ok--sticking around a little longer.")
+											print("######################################################################")
+											self.correctstr = True
+									else:
+										choices[choice]()
+										self.correctstr = True
+										break
+							if self.correctstr == False:
+								print("I didn't get that--try again!")
 						else:
-							print("I didn't get that settlement name--try again!")
+							print("Whoops--enter an option!")
+					else:
+						self.brokenloop = False
+				else:
+					print("I didn't get that settlement name--try again!")
 		
 		else:
 			print("You haven't founded any settlements, yet!")
@@ -1437,9 +1611,9 @@ class Player(Actor):
 		print("\n ### HP ### ")
 		print("\nYour HP: " + str(self.stats["HP"]))
 		if self.companion:
-			print("{0}'s HP: ".format(self.companion.name) + str(self.companion.stats["HP"]))
+			print("{0}'s HP: ".format(self.companion.name.title()) + str(self.companion.stats["HP"]))
 		if self.target:
-			print("{0}'s' HP: ".format(self.target.name) + str(self.target.stats["HP"]))
+			print("{0}'s' HP: ".format(self.target.name.title()) + str(self.target.stats["HP"]))
 		print("######################################################################")
 
 	def checkstats(self):
@@ -1478,7 +1652,7 @@ class Player(Actor):
 			self.checkHP()
 			print("######################################################################")
 			
-			print("You're facing-off against a {1} {0}!  What do you want to do?".format(self.target.name, self.target.sex))
+			print("You're facing-off against a {1} {0}!  What do you want to do?".format(self.target.species, self.target.sex))
 			print("You can: ")
 			for option in encoptions.keys():
 				print(option.title())
@@ -1499,7 +1673,7 @@ class Player(Actor):
 				pass
 			elif self.safe == False:
 				if self.companion and self.companion.stats["HP"] < 1:
-					print("{0} has collapsed!  {1} turns its attention back to {2}!".format(self.companion.name, self.target.name, self.name))
+					print("{0} has collapsed!  {1} turns its attention back to {2}!".format(self.companion.name, self.target.species, self.name))
 					self.tempenemy = self	
 				self.target.orgchoose(self.tempenemy)
 		if self.stats["HP"] < 1:
@@ -1512,6 +1686,8 @@ class Player(Actor):
 			self.restoreHP()
 			self.expdict["game"] += self.target.stats["Exp"]
 			print("You've gained {0} exp!".format(self.target.stats["Exp"]))
+			print("You've earned {0} gold!".format(self.target.stats["Gold"]))
+			self.gold += self.target.stats["Gold"]
 			if self.companion:
 				companionexp = self.target.stats["Exp"] // 2
 				print("{0} has gained {1} exp!".format(self.companion.name, companionexp))
@@ -1563,8 +1739,9 @@ class Player(Actor):
 		self.excludestats = ["Max HP", "Gold", "Exp"]
 		if self.bestiary:
 			for org in self.bestiary:
-				print("\t" + "Name: " + org.name)
-				print("\t" + "Type: " + org.type)
+				print("\t" + "Name: " + org.name.title())
+				print("\t" + "Species: " + org.species.title())
+				print("\t" + "Type: " + org.type.title())
 				print("\t" + "Sex: " + str(org.sex).title())
 				for stat in org.stats.keys():
 					if stat not in self.excludestats:
@@ -1581,8 +1758,9 @@ class Player(Actor):
 			print("You don't have a companion to examine right now!")
 			print("######################################################################")
 			return
-		print("\t" + "Name: " + self.companion.name)
-		print("\t" + "Type: " + self.companion.type)
+		print("\t" + "Name: " + self.companion.name.title())
+		print("\t" + "Species: " + self.companion.species.title())
+		print("\t" + "Type: " + self.companion.type.title())
 		print("\t" + "Sex: " + str(self.companion.sex).title())
 		for stat in self.companion.stats.keys():
 			if stat not in self.excludestats:
@@ -1603,7 +1781,13 @@ class Player(Actor):
 				return
 			else:
 				print("I didn't get that--try again!")
-		for env in self.envlist:
+		
+		if self.mode == "organism":
+			envlist = self.orgenvlist
+		elif self.mode == "rpg":
+			envlist = self.rpgenvlist
+		
+		for env in envlist.keys():
 			print(env.title())
 		print("######################################################################")
 		self.currentenv = ""
@@ -1611,22 +1795,29 @@ class Player(Actor):
 		print("######################################################################")
 		while True:
 			userinput = input("")
-			if userinput.lower() in self.envlist.keys():
-				for env in self.envlist.keys():
+			if userinput.lower() in envlist.keys():
+				for env in envlist.keys():
 					if userinput.lower() in env.lower() and userinput != "":
-						self.currentenv = self.envlist[env]()
+						self.currentenv = envlist[env]()
 				break
 			else:
 				print("I didn't get that--could you try again?")
 		
-		currentlist = self.currentenv.genorgs(self)
+		if self.mode == "organism":
+			currentlist = self.currentenv.genorgs(self)
+		elif self.mode == "rpg":
+			currentlist = [value() for value in self.currentenv.creaturedict.values()]
 		self.currentenv.occupants = self.currentenv.assignstats(currentlist)
+		creatures.gensex(self.currentenv.occupants)
 		print("######################################################################")
 
 
 
 		print("######################################################################")
 		print("It looks like you've made it to {0}!".format(self.currentenv.name))
+		if self.currentenv:
+			if self.currentenv.song:
+				self.playmusic(self.currentenv.song)
 		self.explorecurrent()
 
 
@@ -1847,6 +2038,7 @@ class Player(Actor):
 	def goback(self):
 		self.brokenloop = True
 		self.scavenged = False
+		self.switch = True
 
 	def look(self):
 		print("\n ### GO LOOKING FOR THINGS (REASONABLE) ### ")
@@ -1876,6 +2068,25 @@ class Player(Actor):
 		self.addtolog()
 		self.encounter()
 
+	def playmusic(self, song):
+		if self.musicon:
+			pygame.mixer.music.fadeout(5000)
+			pygame.mixer.music.stop()
+			pygame.mixer.music.load(song)
+			pygame.mixer.music.set_volume(0.5)
+			pygame.mixer.music.play(-1)
+			#time.sleep(1)
+			#pygame.mixer.music.set_volume(0.2)
+			#time.sleep(1)
+			#pygame.mixer.music.set_volume(0.3)
+			#time.sleep(1)
+			#pygame.mixer.music.set_volume(0.5)
+			#time.sleep(1)
+			#pygame.mixer.music.set_volume(0.8)
+			#time.sleep(1)
+			#pygame.mixer.music.set_volume(1)
+			
+
 	def playsound(self):
 		sound = "a"
 		if self.soundon:
@@ -1885,7 +2096,6 @@ class Player(Actor):
 				pygame.mixer.Channel(0).play(sound)
 				time.sleep(2)
 				pygame.mixer.Channel(0).stop()
-				pygame.mixer.quit()
 
 	def passit(self):
 		pass
@@ -1967,6 +2177,25 @@ class Player(Actor):
 			print("Game not saved!")
 		print("######################################################################")
 
+	def renamecompanion(self):
+		if self.companion:
+			oldname = self.companion.name
+			while True:
+				print("Would you like to rename your companion?")
+				userinput = input("")
+				if "y" in userinput:
+					print("What would you like to rename {0}?".format(self.companion.pronoun))
+					newname = input("")
+					self.companion.name = newname.title()
+					print("OK--you've renamed {0} {1}!".format(oldname, self.companion.name))
+					break
+				elif "n" in userinput:
+					print("Ok--no renaming for now!")
+					break
+				else:
+					print("I didn't get that--type 'yes' or 'no'!")
+
+
 	def setcompanion(self):
 		print("\n ### SET YOUR COMPANION ### ")
 		i = 0
@@ -1984,23 +2213,26 @@ class Player(Actor):
 				i += 1
 			print("######################################################################")
 			print("You can currently have one companion traveling alongside you--who would you like it to be?")
-			print("(You can either type the entire name or just the index number!")
+			print("(Type the index number!")
 			userinput = input("")
-			for org in self.bestiary:
-				if userinput == (str(org.index) or org.name):
-					self.formercompanion = self.companion
-					self.companion = org
-					self.bestiary.pop(self.bestiary.index(self.companion))
-					break
-			if self.companion != self.formercompanion and self.formercompanion:
-				print("Your new companion is {0} ({2}), and {1} ({3}) has gone back into the bestiary!".format(self.companion.name, self.formercompanion.name, self.companion.type, self.formercompanion.type))
-				print("######################################################################")
-				input("")
-				self.bestiary.append(self.formercompanion)
-			elif (self.companion == self.formercompanion):
-				print("You've decided to keep traveling with {0} for a while.".format(self.companion.name))
+			if str.isdigit(userinput):
+				for org in self.bestiary:
+					if userinput == (str(org.index) or org.name):
+						self.formercompanion = self.companion
+						self.companion = org
+						self.bestiary.pop(self.bestiary.index(self.companion))
+						break
+				if self.companion != self.formercompanion and self.formercompanion:
+					print("Your new companion is {0} ({2}), and {1} ({3}) has gone back into the bestiary!".format(self.companion.name, self.formercompanion.name, self.companion.type, self.formercompanion.type))
+					print("######################################################################")
+					input("")
+					self.bestiary.append(self.formercompanion)
+				elif (self.companion == self.formercompanion):
+					print("You've decided to keep traveling with {0} for a while.".format(self.companion.name))
+				else:
+					print("You've chosen to travel with {0} (a {1})!".format(self.companion.name, self.companion.type))
 			else:
-				print("You've chosen to travel with {0} (a {1})!".format(self.companion.name, self.companion.type))
+				print("Ooops--type the index (a number)!")
 
 
 		else:
@@ -2011,6 +2243,7 @@ class Player(Actor):
 		print("\n ### SIT AND WAIT ### ")
 		if not self.currentenv.occupants:
 			print("There's nothing here...try another environment!")
+			input("")
 			return
 		def makerandom(self):
 			self.randomnum = random.randint(0, len(self.currentenv.occupants)-1)
@@ -2100,6 +2333,27 @@ class Player(Actor):
 				print("I didn't get that--try again!")
 		print("######################################################################")
 
+	def togglemusic(self):
+		print("\n ### TOGGLE MUSIC ### ")
+		while True:
+			print("Would you like music on or off?")
+			userinput = input("")
+			if "f" in userinput:
+				self.musicon = False
+				pygame.mixer.music.stop()
+				print("Music off!")
+				print("######################################################################")
+				return
+			elif "n" in userinput:
+				self.musicon = True
+				pygame.mixer.init()
+				print("Music on!")
+				print("######################################################################")
+				return
+			else:
+				print("I didn't get that--try again!")
+		print("######################################################################")
+
 	def restcompanion(self):
 		print("\n ### REST YOUR COMPANION ### ")
 		if self.companion:
@@ -2111,7 +2365,7 @@ class Player(Actor):
 				if "y" in userinput2:
 					newguest = self.companion
 					self.hotel.append(newguest)
-					newguest.beganrest = str(time.ctime().split(" ")[3].split(":")[1])
+					newguest.beganrest = self.currentmin()
 					self.companion = ""
 					newguest.resting = True
 					print("Ok!  {0} is now resting!".format(newguest.name))
@@ -2146,10 +2400,11 @@ class Player(Actor):
 					print("Type: " + org.type)
 					print("Index: " + str(org.index))
 					print("Current stats: ")
-					if abs(int(timenow) - int(org.beganrest)):
-						potential = abs(int(timenow) - int(org.beganrest))
+					if abs(int(timenow[1]) - int(org.beganrest[1])):
+						potential = abs(int(timenow[1])) - int(org.beganrest[1])
 					else:
 						potential = "0"
+					potential = abs(potential)
 					for stat in org.stats.keys():
 						if stat not in self.excludestats:
 							print("\t" + stat + " " + str(org.stats[stat]) + " (+ " + str(potential) + ")")

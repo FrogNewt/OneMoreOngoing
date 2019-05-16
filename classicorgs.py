@@ -23,33 +23,10 @@ from shufflecipher import megacipher, intercipher
 
 # produces a "set" to become the orglist that'll temporarily contain all organisms
 
-# Backup to be turned back on if things don't work
-norglist = set()
 
 
 # Opens the scientific names of organisms and reads them in with revisions to help with organization
-def openitup():
-	orglist = set()
-	# Creates the regular expression to be used in identifying proper scientific names in the database being scraped
-	cleanup = r"^[A-Z].+$"
 
-	# Compiles the regex
-	compiledclean = re.compile(cleanup)
-	with open('scientificnames.txt', 'r') as file_stream:
-		for line in file_stream:
-			org_line = line.strip()
-			org_name = org_line.split('\t')[0]
-			#org_type = org_line.split('\t')[5]
-			#temporglist.append(org_name)
-			org_name = org_name.replace('[', '')
-			org_name = org_name.replace(']', '')
-			org_name = org_name.replace(' sp.', '')
-			m = compiledclean.match(org_name)
-			# You could also use if !m: effectively
-			if m:
-				#print(line)
-				orglist.add(org_name)
-	return orglist
 
 
 ### TURN BACK ON AFTER DEBUGGING ###
@@ -125,7 +102,7 @@ class Organism(livingThing):
 		self.truename = ""
 		self.type = ""
 		self.listready = False
-		self.type = "Organism"
+		self.type = "Creature"
 		self.truetype = ""
 		self.hasatype = False
 		self.power = False
@@ -547,27 +524,9 @@ def sortorglist(orglist):
 	orglist = sorted(orglist)
 	return orglist
 
-### TURN BACK ON AFTER DEBUGGING ###
-#orglist = sorted(orglist)
-
-#print(orglist)
-
-
-### TURN BACK ON AFTER DEBUGGING ###
-#popmaster = populatemaster(orglist)
 
 
 
-
-
-
-def scrapetypes(poplist):
-	with open ('eukaryotes.txt', 'r') as file_stream:
-		for line in file_stream:
-			for organism in poplist:
-				if organism.truename in line:
-					organism.type = line.split('\t')[5]
-	return poplist
 
 
 
@@ -601,59 +560,6 @@ secondfungus.name = "Second Fungus"
 dummypop = [somereptile, somefrog, somefungus, secondfrog, thirdfrog, secondfungus]
 
 
-# Assigns each organism a game class based on the Linnaean taxonomic group to which it belongs
-# (And is most recognizable; e.g. "Reptile" over simply "Organism")
-def givetype(poplist):
-	typedict = {
-	"Reptiles" : Reptile,
-	"Amphibians" : Amphibian,
-	"Birds" : Bird,
-	"Mammals" : Mammal,
-	"Fungi" : Fungus,
-	"Ascomycetes" : Ascomycetes,
-	"Insects" : Insect,
-	"Fishes" : Fish,
-	"Plant" : Plant,
-	"Protist" : Protist,
-	"Kinetoplasts" : Kinetoplast,
-	"Other Animals" : Dragon,
-	"Other" : Monster,
-	"Organism" : Pokemon,
-	"Basidiomycetes" : Basidiomycetes,
-	"Apicomplexans" : Apicomplexan,
-	"Flatworms" : Flatworm,
-	"Roundworms" : Roundworm,
-	"Green Algae" : greenAlgae
-	}
-	
-
-	holderlist = []
-	tempnames = []
-	i = 0
-
-
-
-	### THIS WORKS NOW BECAUSE I'M INSTANTIATING EACH CLASS IN THE FOR LOOP INSTEAD OF ABOVE IN THE DICTIONARY--
-	### I.E. IF YOU PUT () PARENTHESES IN THE DICTIONARY VALUES, IT ONLY INSTANTIATES EACH CLASS ONCE INSTEAD OF EACH TIME
-	for org in poplist:
-		holderlist.append(org)
-		tempnames.append(org.name)
-		for key in typedict.keys():
-			if (key.lower() in holderlist[i].type.lower()):
-				holderlist[i] = typedict[key]()
-				holderlist[i].truename = tempnames[i]
-				holderlist[i].name = tempnames[i]
-				holderlist[i].sex = random.randint(0,1)
-				holderlist[i].genfood()
-				if holderlist[i].sex == 1:
-					holderlist[i].sex = "male"
-				elif holderlist[i].sex == 0:
-					holderlist[i].sex = "female"
-			holderlist[i].species = holderlist[i].name
-				#print(holderlist[i], holderlist[i].type)
-		i+=1
-
-	return holderlist
 
 
 
