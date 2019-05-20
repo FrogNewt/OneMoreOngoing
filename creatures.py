@@ -84,6 +84,7 @@ class Organism(livingThing):
 		self.damage = 0
 		self.sound = ""
 		self.action = ""
+		self.metric = 60
 		self.index = 0
 		self.sex = ""
 		self.damID = ""

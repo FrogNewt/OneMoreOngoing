@@ -4,6 +4,7 @@ import sys
 import re
 import pickle
 import random
+import creatures
 #from gameclasses import popmain
 
 
@@ -23,6 +24,7 @@ class basicEnv(object):
 		self.animalnum = 10
 		self.occupants = []
 		self.hasaquatics = False
+		self.song = "Music/Riding_Night.ogg"
 
 	def genorgs(self, player):
 		templist = []
@@ -57,6 +59,7 @@ class basicEnv(object):
 
 class aquaEnv(basicEnv):
 	def __init__(self):
+		super().__init__()
 		self.name = "a basic aquatic environment"
 		self.difficulty = 1
 		self.animalnum = 10
@@ -67,6 +70,7 @@ class Meadow(basicEnv):
 	def __init__(self):
 		super().__init__()
 		self.name = "an inviting meadow"
+
 
 class Bog(aquaEnv):
 	def __init__(self):
@@ -128,8 +132,10 @@ class Village(basicEnv):
 	def __init__(self):
 		super().__init__()
 		self.weather = ""
-		self.rescapacity = 10
-		self.viscapacity = 20
+		self.element = ""
+		self.rescapacity = 5
+		self.resthreshold = 50
+		self.viscapacity = 10
 		self.shopcost = 1000
 		self.name = "A small village"
 		self.cost = 100
@@ -138,25 +144,33 @@ class Village(basicEnv):
 		self.upgrade2 = "city"
 		self.visitors = []
 		self.residents = []
+		self.peoplepresent = []
 		self.popularity = 1
 		self.businesses = []
-
+		self.sanctuary = ""
 		self.menageriecost = 100
 		self.menagerie = []
 		self.menageriesize = 3
 		self.menagerieopen = False
 
 	def setweather(self):
-		weatherlist = [
-		"sunny",
-		"cloudy",
-		"rainy",
-		"stormy",
-		"overcast"
-		]
+		weatherdict = {
+		"sunny" : "Fire",
+		"cloudy" : "Air",
+		"rainy" : "Water",
+		"stormy" : "Water",
+		"overcast" : "Air",
+		"dry" : "Fire",
+		"lush" : "Earth",
+		"green" : "Earth"
+		}
+
+		weatherlist = []
+		[weatherlist.append(weathertype) for weathertype in weatherdict.keys()]
 
 		weatherroll = random.randint(0,len(weatherlist)-1)
 		self.weather = weatherlist[weatherroll]
+		self.element = weatherdict[self.weather]
 
 
 
@@ -170,5 +184,14 @@ class Village(basicEnv):
 		player.visiting = self
 
 
+### TYPES OF SANCTUARIES ###
+class basicSanc(object):
+	cost = 100
+	def __init__(self):
+		self.name = "basic sanctuary"
+		self.type = "undefined type"
+		self.animalnum = 10
+		self.weather = ""
+		self.residents = []
 
 

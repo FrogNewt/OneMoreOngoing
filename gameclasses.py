@@ -422,33 +422,55 @@ class Player(Actor):
 		self.sire = ""
 	
 	# Returns a list containing the current day
+	
+	def currenttime(self):
+		now = int(time.time())
+		return now
+	### THIS METHOD PRINTS OUT A LIST THAT CONTAINS THE DAY OF THE WEEK, MONTH, DAY, AND YEAR (FOR EXACTNESS)
 	def currentday(self):
 		date = time.ctime().split(":")[0].split()[0:3]
 		year = time.ctime().split(":")[2].split()[1]
 		date.append(year)
 		return date
 
-	# Returns a list containing the current (exact, including date) hour
+	def days_since(self, start_time, finish_time):
+		in_seconds = int(finish_time) - int(start_time)
+		days = in_seconds // 86400
+		return days
+
 	def currenthour(self):
 		date = time.ctime().split()[:3]
 		hour = time.ctime().split()[3].split(":")[0]
 		date.append(hour)
 		return date
 
-	# Returns a list containing the current (exact) minute
+	def hours_since(self, start_time, finish_time):
+		in_seconds = int(finish_time) - int(start_time)
+		hours = in_seconds // 3600
+		return hours
+
 	def currentmin(self):
 		minute = time.ctime().split()[3].split(":")[:2]
 		return minute
 
-	# Returns a list containing the current (exact) second
+	def minutes_since(self, start_time, finish_time):
+		in_seconds = int(finish_time) - int(start_time)
+		minutes = in_seconds // 60
+		return minutes
+
 	def currentsec(self):
 		second = time.ctime().split()[3].split(":")[:3]
 		return second
 
+	def seconds_since(self, start_time, finish_time):
+		in_seconds = int(finish_time) - int(start_time)
+		return in_seconds
+
+
 	def addtolog(self):
 		if self.target not in self.naturelog:
 			print("######################################################################")
-			print("{0} (a {1}) added to your nature log!".format(self.target.name, self.target.type))
+			print("{0} (a {1}) added to your nature log!".format(self.target.name.title(), self.target.type.title()))
 			self.naturelog.append(self.target)
 
 	def attack(self):
@@ -724,7 +746,7 @@ class Player(Actor):
 					userwait = input("")
 					if "y" in userwait:
 						print("Ok--check back tomorrow!")
-						self.dam.matedtime = self.currentmin()
+						self.dam.matedtime = self.currenttime()
 						self.bestiary.pop(self.bestiary.index(self.dam))
 						self.bestiary.pop(self.bestiary.index(self.sire))
 						self.nursery.append(self.dam)
@@ -780,14 +802,17 @@ class Player(Actor):
 		if not self.nursery:
 			print("Your nursery is currently empty--come back after you've bred two adults of the same type!")
 			print("######################################################################")
+			input("")
 			return
 		print("######################################################################")
 		
 	# Splits ctime output to produce an element of the current time (e.g. day, month, hour, etc)
-		checktime = self.currentmin()
+		newtime = self.currenttime()
+
+		gestation = int(self.minutes_since(self.dam.matedtime, newtime))
 		
 	# Checks to see if the baby is ready, yet
-		if self.dam.matedtime != checktime:
+		if gestation > 1:
 			newbaby = organisms.Organism()
 			print("Congratulations--you've got a new baby!")
 
@@ -807,7 +832,7 @@ class Player(Actor):
 			offspring = [newbaby]
 
 			# Gives newbaby a name that's half its mom and half its dad
-			if self.mode = "organism":	
+			if self.mode == "organism":	
 				species = self.sire.name.split()
 				if len(species) > 1:
 					species = species[1]
@@ -819,7 +844,7 @@ class Player(Actor):
 				newbaby = offspring[0]
 				newbaby.name = genus.capitalize() + " " + species.lower()
 				newbaby.evolvable = False
-			if self.mode = "rpg":
+			if self.mode == "rpg":
 				randomnum = random.randint(0,1)
 				if randomnum == 1:
 					newbaby.name = self.sire.species
@@ -969,6 +994,62 @@ class Player(Actor):
 						print("######################################################################")
 				else:
 					print("Ooops--try again!")
+
+	def add_to_sanctuary(self):
+		print("Do you want to add an organism to the sanctuary?  Once they go in, they can never come back out (though they might produce offspring that can leave the sanctuary...)!")
+		usrinput = input("")
+		if "y" in usrinput:
+			print("Ok!  Who do you want to add to the sanctuary?")
+
+	def opensanctuary(self):
+		if self.gold >= basicSanc.cost:
+			print("######################################################################")
+			print("Are you sure you want to open a wildlife sanctuary?  It'll cost you {0} gold!".format(basicSanc.cost))
+			print("######################################################################")
+			usrinput = input("")
+			if usrinput:
+				if "y" in usrinput:
+					newsanc = classicenvironments.basicSanc()
+					if not self.visiting.sanctuary:
+						self.visiting.sanctuary = newsanc
+						print("######################################################################")
+						print("Congratulations--you've got yourself a wildlife sanctuary!")
+						print("(...it's empty, though.)")
+						print("######################################################################")
+						print("What would you like to call it?!")
+						print("######################################################################")
+						usrinput = input("")
+						self.visiting.sanctuary.name = usrinput.title() + " " + "Wildlife Sanctuary"
+						print("All right--{0} is ready!".format(newsanc.name))
+						input("")
+						print("######################################################################")
+				else:
+					print("Ooops--try again!")
+
+	def visitsanctuary(self):
+		if self.visiting.sanctuary:
+			sancmenu = {
+			"release wildlife into sanctuary [1]" : self.add_to_sanctuary,
+			"go back [0]" : self.goback
+			}
+
+			self.switch = False
+			while self.switch == False:
+				print("######################################################################")
+				print("### MANAGE {0} ### \n".format(self.visiting.sanctuary.name.upper()))
+				print("######################################################################")
+				for menuitem in sancmenu.keys():
+					print(menuitem.title())
+				print("\nWhat do you want to do at {0}?".format(self.visiting.sanctuary.name))
+				usrinput = input("")
+				if usrinput.lower() in "go back":
+					break
+				for menuitem in sancmenu.keys():
+					if usrinput.lower() in menuitem.lower():
+						sancmenu[menuitem]()
+		else:
+			print("You don't have a sanctuary--found one!")
+
 
 	def pickshop(self):
 		if self.visiting.businesses:
@@ -1506,9 +1587,11 @@ class Player(Actor):
 		"check on shop [3]" : self.pickshop,
 		"open a menagerie [4]" : self.genmenagerie,
 		"visit menagerie [5]" : self.visitmenagerie,
-		"meet residents [6]" : self.meetresidents,
-		"greet visitors [7]" : self.greetvisitors,
-		"check weather [8]" : self.checkweather, 
+		"open sanctuary [6]" : self.opensanctuary,
+		"visit sanctuary [7]" : self.visitsanctuary,
+		"meet residents [8]" : self.meetresidents,
+		"greet visitors [9]" : self.greetvisitors,
+		"check weather [10]" : self.checkweather, 
 		"go back (leave settlement) [0]" : self.goback
 		}
 
@@ -1767,6 +1850,7 @@ class Player(Actor):
 				print("\t\t" + stat + " " + str(self.companion.stats[stat]))
 		print("\n")
 		print("######################################################################")
+		input("")
 
 	# Go exploring in the world!
 	def explorenew(self):
@@ -1807,6 +1891,8 @@ class Player(Actor):
 			currentlist = self.currentenv.genorgs(self)
 		elif self.mode == "rpg":
 			currentlist = [value() for value in self.currentenv.creaturedict.values()]
+			for org in currentlist:
+				org.name = org.name.title()
 		self.currentenv.occupants = self.currentenv.assignstats(currentlist)
 		creatures.gensex(self.currentenv.occupants)
 		print("######################################################################")
@@ -1839,29 +1925,32 @@ class Player(Actor):
 		print("Ooops!  That's not working yet!")
 
 	def feedcompanion(self):
-			print("\n ### FEED YOUR COMPANION ### ")
-			if self.inventory:
-				if self.companion:
-					print("What would you like to feed your companion?")
-					for element in self.inventory:
-						print(element.name.capitalize())
-					userinput = input("")
-					for element in self.inventory:
-						if userinput == element.name:
-							print("You fed {0} {1}!".format(self.companion.name, element.name))
-							print("{0}'s {1} went up by {2}!".format(self.companion.name, element.affects, element.quality))
-							self.companion.stats[element.affects] += element.quality
-							self.inventory.pop(self.inventory.index(element))
-							print("######################################################################")
-							print('\n')
-							return
-					print("######################################################################")
-				else:
-					print("You don't have a companion to feed!")
-					print("######################################################################")
-			else:
-				print("You don't have anything to feed your companion!")
+		print("\n ### FEED YOUR COMPANION ### ")
+		if self.inventory:
+			if self.companion:
+				print("What would you like to feed your companion?")
+				for element in self.inventory:
+					print(element.name.capitalize())
+				userinput = input("")
+				for element in self.inventory:
+					if userinput == element.name:
+						print("######################################################################")
+						print("You fed {0} {1}!".format(self.companion.name, element.name))
+						print("{0}'s {1} went up by {2}!".format(self.companion.name, element.affects, element.quality))
+						self.companion.stats[element.affects] += element.quality
+						self.inventory.pop(self.inventory.index(element))
+						print("######################################################################")
+						print('\n')
+						input("")
+						return
 				print("######################################################################")
+			else:
+				print("You don't have a companion to feed!")
+				print("######################################################################")
+		else:
+			print("You don't have anything to feed your companion!")
+			print("######################################################################")
+		input("")
 
 
 	# Main method for gaining experience in the game; varies (or will vary) between flexible and fixed modes
@@ -2203,8 +2292,8 @@ class Player(Actor):
 		if self.bestiary:
 			for org in self.bestiary:
 				org.index = i
-				print("\tName: " + org.name)
-				print("\tType: " + org.type)
+				print("\tName: " + org.name.title())
+				print("\tType: " + org.type.title())
 				print("\tBestiary Index:" + str(org.index))
 				for stat in org.stats.keys():
 					if stat not in self.excludestats:
@@ -2365,7 +2454,7 @@ class Player(Actor):
 				if "y" in userinput2:
 					newguest = self.companion
 					self.hotel.append(newguest)
-					newguest.beganrest = self.currentmin()
+					newguest.beganrest = self.currenttime()
 					self.companion = ""
 					newguest.resting = True
 					print("Ok!  {0} is now resting!".format(newguest.name))
@@ -2379,12 +2468,16 @@ class Player(Actor):
 
 	def checkresting(self):
 		print("\n ### CHECK RESTING ORGANISMS ### ")
-		timenow = self.currentmin()
+		timenow = self.currenttime()
+		potential = 0
+		print(timenow)
 		if self.hotel:
 			print("These organisms are currently resting:")
 			for org in self.hotel:
 				print("\t" + org.name)
-				if org.beganrest != timenow:
+				print(org.beganrest)
+				print(self.seconds_since(org.beganrest, timenow))
+				if (self.seconds_since(org.beganrest, timenow)) >= 1:
 					org.resting = False
 		someready = False
 		for org in self.hotel:
@@ -2400,11 +2493,10 @@ class Player(Actor):
 					print("Type: " + org.type)
 					print("Index: " + str(org.index))
 					print("Current stats: ")
-					if abs(int(timenow[1]) - int(org.beganrest[1])):
-						potential = abs(int(timenow[1])) - int(org.beganrest[1])
+					if timenow - org.beganrest:
+						potential = (timenow - org.beganrest) // org.metric
 					else:
 						potential = "0"
-					potential = abs(potential)
 					for stat in org.stats.keys():
 						if stat not in self.excludestats:
 							print("\t" + stat + " " + str(org.stats[stat]) + " (+ " + str(potential) + ")")
@@ -2421,7 +2513,7 @@ class Player(Actor):
 				if userinput3 == str(org.index):
 					print("You've withdrawn {0}!  It's back in the bestiary!".format(org.name))
 					for stat in org.stats.keys():
-						org.stats[stat] += abs(int(timenow) - int(org.beganrest))
+						org.stats[stat] += potential
 					self.bestiary.append(org)
 					self.hotel.pop(self.hotel.index(org))
 			print("######################################################################")

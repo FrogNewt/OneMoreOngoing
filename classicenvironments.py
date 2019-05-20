@@ -78,6 +78,7 @@ class Meadow(basicEnv):
 	"mouse" : creatures.Mouse,
 	"salamander" : creatures.Salamander
 	}
+
 	def __init__(self):
 		super().__init__()
 		self.name = "an inviting meadow"
@@ -118,6 +119,16 @@ class darkForest(basicEnv):
 		self.difficulty = 20
 		self.animalnum = 40
 
+### TYPES OF SANCTUARIES ###
+class basicSanc(object):
+	cost = 100
+	def __init__(self):
+		self.name = "basic sanctuary"
+		self.type = "undefined type"
+		self.animalnum = 10
+		self.weather = ""
+		self.residents = []
+
 
 ### TYPES OF SHOPS ###
 class basicShop(basicEnv):
@@ -151,6 +162,7 @@ class Village(basicEnv):
 		self.name = "A small village"
 		self.cost = 100
 		self.type = "village"
+		self.sanctuary = ""
 		self.upgrade = "town"
 		self.upgrade2 = "city"
 		self.visitors = []

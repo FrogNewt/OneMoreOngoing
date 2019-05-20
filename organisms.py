@@ -139,7 +139,9 @@ class Organism(livingThing):
 		self.matedtime = ""
 		self.sireID = ""
 		self.babyID = ""
+		self.pronoun = ""
 		self.resting = False
+		self.metric = 60
 		self.expgained = 0
 		self.evolved = 0
 
