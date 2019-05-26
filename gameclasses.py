@@ -652,7 +652,7 @@ class Player(Actor):
 							reptype.females += 1
 						elif org.sex == "male":
 							reptype.males += 1
-				print(reptype.type + ":" + str(reptype.males) + " males, " + str(reptype.females) + " females")
+				print(reptype.type.title() + ":" + str(reptype.males) + " males, " + str(reptype.females) + " females")
 				if (reptype.males > 0) and (reptype.females > 0):
 					typeholderlist.append(reptype)
 					reptype.ready = True
@@ -982,6 +982,7 @@ class Player(Actor):
 						print("All right--{0} will be open for business...starting tomorrow!".format(newshop.name))
 						self.visiting.businesses[location].firstone = True
 						print("######################################################################")
+						input("")
 
 					elif self.visiting.businesses:
 						self.visiting.businesses.append(newshop)
@@ -992,44 +993,148 @@ class Player(Actor):
 						self.visiting.businesses[location].name = usrinput.title()
 						print("All right--{0} will be open for business...starting tomorrow!".format(newshop.name))
 						print("######################################################################")
+						input("")
 				else:
 					print("Ooops--try again!")
+					input("")
 
 	def add_to_sanctuary(self):
+		print("######################################################################")
 		print("Do you want to add an organism to the sanctuary?  Once they go in, they can never come back out (though they might produce offspring that can leave the sanctuary...)!")
+		print("######################################################################")
 		usrinput = input("")
 		if "y" in usrinput:
-			print("Ok!  Who do you want to add to the sanctuary?")
+			newguy = ""
+			if self.bestiary:
+				i = 0
+				for beast in self.bestiary:
+					beast.index = i
+					print("\t" + beast.name)
+					print("\t" + "Type: " + beast.type.title())
+					print("\tIndex: " + str(beast.index))
+					print("\n")
+					i += 1
+				print("Who would you like to add to the sanctuary? (Type the organism's index!)")
+				print("######################################################################")
+				usrinput = input("")
+				for beast in self.bestiary:
+					if usrinput == str(beast.index):
+						blam = False
+						while blam == False:
+							print("######################################################################")
+							print("Are you sure you want to add {0}, a {1}, to the sanctuary?".format(beast.name, beast.species))
+							print("######################################################################")
+							usrinput2 = input("")
+							if "y" in usrinput2:
+								newguy = beast
+								self.bestiary.pop(self.bestiary.index(newguy))
+								self.visiting.sanctuary.residents.append(newguy)
+								print("{0} added to {1}!".format(newguy.name, self.visiting.sanctuary.name))
+								input("")
+								blam = True
+								break
+
+							elif "n" in usrinput2:
+								print("Did not add {0} to the sanctuary!".format(beast.name))
+								input("")
+								blam = True
+							else:
+								print("I didn't get that--try again!")
+			else:
+				print("You don't have anyone in your bestiary to add to the sanctuary right now!")
+				input("")
+
 
 	def opensanctuary(self):
-		if self.gold >= basicSanc.cost:
-			print("######################################################################")
-			print("Are you sure you want to open a wildlife sanctuary?  It'll cost you {0} gold!".format(basicSanc.cost))
+		if not self.visiting.sanctuary:
+			if self.gold >= basicSanc.cost:
+				print("######################################################################")
+				print("Are you sure you want to open a wildlife sanctuary?  It'll cost you {0} gold!".format(basicSanc.cost))
+				print("######################################################################")
+				usrinput = input("")
+				if usrinput:
+					if "y" in usrinput:
+						newsanc = classicenvironments.basicSanc()
+						if not self.visiting.sanctuary:
+							self.visiting.sanctuary = newsanc
+							print("######################################################################")
+							print("Congratulations--you've got yourself a wildlife sanctuary!")
+							print("(...it's empty, though.)")
+							print("######################################################################")
+							print("What would you like to call it?!")
+							print("######################################################################")
+							usrinput = input("")
+							self.visiting.sanctuary.name = usrinput.title() + " " + "Wildlife Sanctuary"
+							print("All right--{0} is ready!".format(newsanc.name))
+							input("")
+							print("######################################################################")
+					else:
+						print("Ooops--try again!")
+		else:
+			print("This settlement already has a sanctuary!")
+			input("")
+
+	def drive_out_of_sanctuary(self):
+		if self.visiting.sanctuary.residents:
+			print("Are you sure you want to drive a creature out of your sanctuary?  This'll free-up space, but it'll also cause all your conservationists to leave town!")
+			print("'Yes' (I want to drive something out!) or 'no' (let's leave things as they are)?")
 			print("######################################################################")
 			usrinput = input("")
-			if usrinput:
-				if "y" in usrinput:
-					newsanc = classicenvironments.basicSanc()
-					if not self.visiting.sanctuary:
-						self.visiting.sanctuary = newsanc
-						print("######################################################################")
-						print("Congratulations--you've got yourself a wildlife sanctuary!")
-						print("(...it's empty, though.)")
-						print("######################################################################")
-						print("What would you like to call it?!")
-						print("######################################################################")
-						usrinput = input("")
-						self.visiting.sanctuary.name = usrinput.title() + " " + "Wildlife Sanctuary"
-						print("All right--{0} is ready!".format(newsanc.name))
-						input("")
-						print("######################################################################")
-				else:
-					print("Ooops--try again!")
+			if "y" in usrinput:
+				i = 0
+				for org in self.visiting.sanctuary.residents:
+					org.index = i
+					print("Name: " + org.name.title())
+					print("Species: " + org.species.title())
+					print("Index: " + str(org.index))
+					i += 1
+					print("\n")
+				print("Who do you want to drive out of the sanctuary?")
+				print("######################################################################")
+				usrinput2 = input("")
+				print("Are you CERTAIN you want to drive somebody out?  There could be consequences...")
+				usrinput3 = input("")
+				if "n" in usrinput3:
+					print("Ok--leaving it alone, for now.")
+				elif "y" in usrinput3:
+					bumped = ""
+					for org in self.visiting.sanctuary.residents:
+						if usrinput2 == str(org.index):
+							bumped = org
+							self.visiting.sanctuary.residents.pop(self.visiting.sanctuary.residents.index(bumped))
+							print("You've driven {0} ({1}) out of the sanctuary--one space has cleared-up!".format(bumped.name, bumped.species))
+							for person in self.visiting.residents:
+								if person.conservationist == True:
+									self.visiting.residents.pop(self.visiting.residents.index(person))
+									print("{0} has stormed off from your settlement (and driven away in a hybrid)!".format(person.name.title()))
+									input("")
+							for person in self.visiting.visitors:
+								if person.conservationist == True:
+									self.visiting.visitors.pop(self.visiting.visitors.index(person))
+									print("{0} has stormed off from your settlement!".format(person.name.title()))
+									input("")
+		else:
+			print("You don't have anyone in the sanctuary to drive off, yet.")
+			input("")
+
+	def observe_sanctuary(self):
+		sanctuary = self.visiting.sanctuary
+		if self.visiting.sanctuary.residents:
+			print("You catch a glimpse of these creatures roaming through the sanctuary:")
+			for animal in sanctuary.residents:
+				print("Name: " + animal.name.title())
+				print("Species: " + animal.species.title() + "\n")
+				input("")
+		else:
+			print("There's nothing in the sanctuary...yet!")
+			input("")
 
 	def visitsanctuary(self):
 		if self.visiting.sanctuary:
 			sancmenu = {
 			"release wildlife into sanctuary [1]" : self.add_to_sanctuary,
+			"observe wildlife [2]" : self.observe_sanctuary,
+			"drive wildlife out of the sanctuary [3]" : self.drive_out_of_sanctuary,
 			"go back [0]" : self.goback
 			}
 
@@ -1049,6 +1154,7 @@ class Player(Actor):
 						sancmenu[menuitem]()
 		else:
 			print("You don't have a sanctuary--found one!")
+			input("")
 
 
 	def pickshop(self):
@@ -1070,12 +1176,14 @@ class Player(Actor):
 					print("Which shop, again?")
 			print("You're visiting {0}!".format(self.patron.name))
 			print("######################################################################")
+			input("")
 			self.checkshop()
 			self.patron = ""
 		else:
 			print("######################################################################")
 			print("{0} doesn't have any shops, yet!".format(self.visiting.name))
 			print("######################################################################")
+			input("")
 
 
 	def checkearnings(self):
@@ -1320,6 +1428,15 @@ class Player(Actor):
 			print("######################################################################")
 
 
+	def open_arboretum(self):
+		if not self.visiting.arboretum:
+			newarb = Arboretum()
+			#newarb.begin()
+			self.visiting.arboretum = newarb
+		if self.visiting.arboretum:
+			self.visiting.arboretum.check_for_fruit()
+
+
 	def genmenagerie(self):
 		if self.visiting and (self.visiting.menagerieopen == False) and (self.gold >= self.visiting.menageriecost):
 			print("######################################################################")
@@ -1483,7 +1600,12 @@ class Player(Actor):
 		for person in self.visiting.peoplepresent:
 			namelist.append(person.name)
 		while len(self.visiting.visitors) < self.visiting.viscapacity:
-			newguy = organisms.NPC()
+			conservation_roll = random.randint(0,10)
+			geneticist_roll = random.randint(0,10)
+			if self.mode == "rpg":
+				newguy = creatures.NPC()
+			elif self.mode == "organism":
+				newguy = organisms.NPC()
 			randpick = random.randint(0,len(newguy.namedict.keys())-1)
 			newguy.name = list(newguy.namedict.keys())[randpick]
 			if newguy.name not in namelist:
@@ -1497,6 +1619,12 @@ class Player(Actor):
 			if newguy.element == self.visiting.element:
 				newguy.comfort *= 2
 			newguy.gold *= ((self.luck + self.intellect) // 2)
+			if self.visiting.sanctuary:
+				conservationroll += 4
+			if conservation_roll >= 10:
+				newguy.conservationist = True
+				if geneticist_roll >= 10:
+					newguy.geneticist = True
 		self.visiting.peoplepresent = self.visiting.visitors + self.visiting.residents
 			
 
@@ -1548,6 +1676,10 @@ class Player(Actor):
 			for visitor in self.visiting.visitors:
 				print("\t" + visitor.name.title())
 				print("\t" + "Element: " + visitor.element.title())
+				if visitor.conservationist == True:
+					print("\t" + "{0} is also staunch conservationist!".format(visitor.name.title()))
+					if visitor.geneticist == True:
+						print("\t" + "...and a geneticist!")
 				print("")
 		else:
 			print("######################################################################")
@@ -1592,12 +1724,14 @@ class Player(Actor):
 		"meet residents [8]" : self.meetresidents,
 		"greet visitors [9]" : self.greetvisitors,
 		"check weather [10]" : self.checkweather, 
+		"open arboretum [11]" : self.open_arboretum,
 		"go back (leave settlement) [0]" : self.goback
 		}
 
 		if self.settlements:
+			wham = False
 			self.correctstr = False
-			while self.brokenloop == False:
+			while wham == False:
 				print("### VISIT SETTLEMENTS ###")
 				print("######################################################################")
 				for settlement in self.settlements:
@@ -1624,47 +1758,46 @@ class Player(Actor):
 							print("######################################################################")
 					if wham == False:
 							print("Ooops--I don't think you have a settlement by that name.  Try again.")
+							print("######################################################################")
+							input("")
 						
-					while self.brokenloop == False:
-						print("\n")
-						print("######################################################################")
-						print("### VISITING {0} ###".format(self.visiting.name.upper()))
-						print("######################################################################")
-						print("\n")
-						for choice in choices.keys():
-							print(choice.title())
-						print("######################################################################")
-						print("What would you like to do while in {0}?".format(self.visiting.name))
-						print("######################################################################")
-						newinput = input("")
-						if newinput:
-							for choice in choices:
-								if newinput.lower() in choice.lower():
-									if "go back" in choice:
-										print("######################################################################")
-										print("Are you sure you want to leave {0}?".format(self.visiting.name))
-										lastcall = input("")
-										if "y" in lastcall:
-											self.genresidents()
-											choices[choice]()
-											self.correctstr = True
-										else:
-											print("Ok--sticking around a little longer.")
-											print("######################################################################")
-											self.correctstr = True
-									else:
-										choices[choice]()
-										self.correctstr = True
-										break
-							if self.correctstr == False:
-								print("I didn't get that--try again!")
-						else:
-							print("Whoops--enter an option!")
-					else:
-						self.brokenloop = False
+			while self.brokenloop == False:
+				print("\n")
+				print("######################################################################")
+				print("### VISITING {0} ###".format(self.visiting.name.upper()))
+				print("######################################################################")
+				print("\n")
+				for choice in choices.keys():
+					print(choice.title())
+				print("######################################################################")
+				print("What would you like to do while in {0}?".format(self.visiting.name))
+				print("######################################################################")
+				newinput = input("")
+				if newinput:
+					for choice in choices:
+						if newinput.lower() in choice.lower():
+							if "go back" in choice:
+								print("######################################################################")
+								print("Are you sure you want to leave {0}?".format(self.visiting.name))
+								lastcall = input("")
+								if "y" in lastcall:
+									self.genresidents()
+									choices[choice]()
+									self.correctstr = True
+								else:
+									print("Ok--sticking around a little longer.")
+									print("######################################################################")
+									self.correctstr = True
+							else:
+								choices[choice]()
+								self.correctstr = True
+								break
+					if self.correctstr == False:
+						print("I didn't get that--try again!")
 				else:
-					print("I didn't get that settlement name--try again!")
-		
+					print("Whoops--enter an option!")
+			else:
+				self.brokenloop = False
 		else:
 			print("You haven't founded any settlements, yet!")
 
@@ -2138,8 +2271,11 @@ class Player(Actor):
 			print("######################################################################")
 			return
 
+	# The number generated that determines which organism you run into out of those occupying the area.
 		def makerandom(self):
 			self.randomnum = random.randint(0, len(self.currentenv.occupants)-1)
+
+	# Another random number that doesn't yet have a purpose--could be used to induce an effect from "looking for things in a reasonable way"
 		def makelooknum(self):
 			self.looknum = random.randint(1,self.luck)
 		self.target = ""
@@ -2157,6 +2293,7 @@ class Player(Actor):
 		self.addtolog()
 		self.encounter()
 
+# Starts playing the song-as-argument given if music is enabled
 	def playmusic(self, song):
 		if self.musicon:
 			pygame.mixer.music.fadeout(5000)
@@ -2164,18 +2301,9 @@ class Player(Actor):
 			pygame.mixer.music.load(song)
 			pygame.mixer.music.set_volume(0.5)
 			pygame.mixer.music.play(-1)
-			#time.sleep(1)
-			#pygame.mixer.music.set_volume(0.2)
-			#time.sleep(1)
-			#pygame.mixer.music.set_volume(0.3)
-			#time.sleep(1)
-			#pygame.mixer.music.set_volume(0.5)
-			#time.sleep(1)
-			#pygame.mixer.music.set_volume(0.8)
-			#time.sleep(1)
-			#pygame.mixer.music.set_volume(1)
 			
 
+# Used to actually play sound (if enabled)
 	def playsound(self):
 		sound = "a"
 		if self.soundon:

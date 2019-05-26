@@ -163,6 +163,7 @@ class Village(basicEnv):
 		self.cost = 100
 		self.type = "village"
 		self.sanctuary = ""
+		self.arboretum = ""
 		self.upgrade = "town"
 		self.upgrade2 = "city"
 		self.visitors = []

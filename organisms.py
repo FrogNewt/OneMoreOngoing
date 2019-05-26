@@ -313,6 +313,8 @@ class NPC(Organism):
 		self.targetitem = ""
 		self.buyinterest = random.randint(0,100)
 		self.likes = ""
+		self.conservationist = False
+		self.geneticist = False
 		self.items = []
 		self.hired = ""
 		self.shopping = ""
@@ -440,12 +442,6 @@ class Insect(Organism):
 		self.stats["Gold"] = self.stats["Gold"] * 10
 		self.stats["Luck"] = self.stats["Luck"] * 3
 
-class Plant(Organism):
-	def __init__(self):
-		super().__init__()
-		self.therm = "none"
-		self.type = "Plant"
-		self.mobile = False
 
 class Protist(Organism):
 	def __init__(self):
@@ -657,6 +653,102 @@ def givetype(poplist):
 
 	return holderlist
 
+class Fruit(Food):
+	def __init__(self):
+		super().__init__()
+		self.species = 'undefined fruit'
+		self.description = "a plain, old piece of fruit"
+		self.quality = 1
+		self.affects = ""
+
+class Blueberry(Fruit):
+	def __init__(self):
+		super().__init__()
+		self.species = "blueberry"
+		self.quality = 2
+		self.affects = "Intellect"
+		self.description = "A ripe blueberry"
+
+class Apple(Fruit):
+	def __init__(self):
+		super().__init__()
+		self.species = "apple"
+		self.quality = 3
+		self.affects = "HP"
+		self.description = "A crisp, red apple"
+
+class Banana(Fruit):
+	def __init__(self):
+		super().__init__()
+		self.species = "apple"
+		self.quality = 3
+		self.affects = "HP"
+		self.description = "A yellow, Cavendish banana"
+
+
+
+class Plant(Organism):
+	def __init__(self):
+		super().__init__()
+		self.therm = "none"
+		self.species = "plant"
+		self.name = self.species
+		self.type = "Plant"
+		self.mobile = False
+		self.maturity = 0
+		self.full_maturity = 3
+		self.rarity = 1
+		self.fruit_type = "undefined fruit"
+		self.fruit = ""
+		self.fruit_produced = []
+		self.mature = False
+	def grow(self):
+		print("The {0} has grown a little bit!".format(self.name.title()))
+		self.maturity += 1
+		input("")
+	def maturity_check(self):
+		if self.maturity >= self.full_maturity:
+			print("This plant is ready to bear fruit!")
+			self.mature = True
+			input("")
+		elif self.maturity < self.full_maturity:
+			print("This plant is still a little young to produce any fruit...")
+			input("")
+	def fruit_check(self):
+		if self.mature == True:
+			fruit_roll = random.randint(0,self.rarity)
+			if fruit_roll <= 1:
+				print("This {0} has produced a {1}!".format(self.name, self.fruit_type))
+
+class appleTree(Plant):
+	def __init__(self):
+		super().__init__()
+		self.species = "apple tree"
+		self.type = "tree"
+		self.full_maturity = 3
+		self.rarity = 5
+		self.type = "apple"
+		self.fruit = Apple
+
+class bananaTree(Plant):
+	def __init__(self):
+		super().__init__()
+		self.species = "banana tree"
+		self.type = "tree"
+		self.full_maturity = 3
+		self.rarity = 5
+		self.fruit_type = "banana"
+		self.fruit = Banana
+
+class blueberryBush(Plant):
+	def __init__(self):
+		super().__init__()
+		self.species = "blueberry bush"
+		self.type = "blush"
+		self.full_maturity = 3
+		self.rarity = 5
+		self.type = "blueberry"
+		self.fruit = Blueberry
 
 
 

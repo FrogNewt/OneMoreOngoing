@@ -211,6 +211,110 @@ class Organism(livingThing):
 		foodnum = random.randint(0,len(fooddict)-1)
 		self.item = fooddict[foodnum]()
 
+
+### TO BE USED IN PRODUCING ALL NON-PLAYER, HUMAN/HUMANOID CHARACTERS WHO CAN SPEAK TO/INTERACT WITH THE PLAYER ###
+class NPC(Organism):
+	def __init__(self):
+		super().__init__()
+		
+		self.elementslist = ["fire", "water", "earth", "air"]
+
+		self.preflist = [
+			"Reptile",
+			"Amphibian",
+			"Fish",
+			"Bird",
+			"Roundworm",
+			"Flatworm",
+			"Gastropod"
+			"Dragon",
+			"Monster",
+			"Pokemon",
+			"Arachnid",
+			"Insect",
+			"Elemental",
+			"Golem"
+			]
+
+		self.namedict = {
+		"jim" : "m",
+		"jenny" : "f",
+		"jamal" : "m",
+		"jess" : "f",
+		"echo" : "f",
+		"rick" : "m",
+		"mortimer" : "m",
+		"jerry" : "m",
+		"jocelyn" : "f",
+		"eric" : "m",
+		"horace" : "m",
+		"malik" : "m",
+		"leslie" : "f",
+		"farrah" : "f",
+		"sarah" : "f",
+		"amanda" : "f",
+		"courtney" : "f",
+		"barbara" : "f"
+		}
+		
+		self.sex = ""
+		self.comfort = random.randint(0,50)
+		self.aloofness = random.randint(0,100)
+		self.gold = random.randint(0,100)
+		self.name = "Stranger"
+		self.merchant = 0
+		self.targetitem = ""
+		self.buyinterest = random.randint(0,100)
+		self.likes = ""
+		self.items = []
+		self.conservationist = False
+		self.geneticist = False
+		self.hired = ""
+		self.shopping = ""
+		self.resident = ""
+		self.visitor = ""
+		self.element = ""
+
+	def shop(self, player):
+		# Check to see if this NPC is visiting the town the user is currently in
+		if self.visitor == player.visiting:
+			# If the visitor is in the town, checks to see if the user likes the mascot
+			if player.patron.mascot:
+				if self.likes.title() == player.patron.mascot.type.title():
+					self.comfort *= 2
+			# Check to see whether or not the visitor chooses to shop
+			if self.comfort > self.aloofness:
+				self.shopping = player.patron
+				player.patron.shoppers.append(self)
+				self.buy(player)
+			# Check to see if there are things to buy in the shop
+			
+
+
+	def buy(self, player):
+		if (self.shopping == player.patron) and player.patron.forsale:
+			choice = random.randint(0, len(player.patron.forsale)-1)
+			self.targetitem = player.patron.forsale[choice]
+			self.aloofness += (self.targetitem.price // 5)
+			buyboost = random.randint(0, player.luck+player.intellect+(self.comfort // 2))
+			if self.targetitem in player.patron.forsale:
+				self.buyinterest += buyboost
+				if self.buyinterest > self.aloofness:
+					if self.targetitem.price < self.gold:
+						self.targetitem.boughtby = self.name
+						player.patron.sold.append(self.targetitem)
+						player.patron.forsale.pop(player.patron.forsale.index(self.targetitem))
+						self.gold -= self.targetitem.price
+						player.patron.earnings += self.targetitem.price
+						self.targetitem = ""
+						player.patron.shoppers.pop(player.patron.shoppers.index((self)))
+				elif self.buyinterest < self.aloofness:
+					player.patron.shoppers.pop(player.patron.shoppers.index((self)))
+
+
+
+
+
 def gensex(poplist):
 	i = 0
 	holderlist = []

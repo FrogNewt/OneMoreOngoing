@@ -5,6 +5,7 @@ import re
 import pickle
 import random
 import creatures
+import organisms
 #from gameclasses import popmain
 
 
@@ -140,6 +141,7 @@ class Village(basicEnv):
 		self.name = "A small village"
 		self.cost = 100
 		self.type = "village"
+		self.arboretum = ""
 		self.upgrade = "town"
 		self.upgrade2 = "city"
 		self.visitors = []
@@ -193,5 +195,25 @@ class basicSanc(object):
 		self.animalnum = 10
 		self.weather = ""
 		self.residents = []
+
+class Arboretum(object):
+	cost = 300
+	def __init__(self):
+		self.name = "basic arboretum"
+		self.type = "undefined type"
+		self.plots = 5
+		self.weather = ""
+		self.planted = [organisms.appleTree(), organisms.blueberryBush(), organisms.bananaTree()]
+
+	def check_for_fruit(self):
+		for plant in self.planted:
+			plant.grow()
+			plant.maturity_check()
+			plant.fruit_check()
+
+	def begin(self):
+		for plant in self.planted:
+			plant()
+
 
 
